@@ -24,6 +24,7 @@ const app = initializeApp(firebaseConfig);
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 
+// LOGIN AND LOGOUT
 document.addEventListener("DOMContentLoaded", function() {
     // Logout button
     var logoutButton = document.getElementById("logout");
@@ -33,47 +34,30 @@ document.addEventListener("DOMContentLoaded", function() {
         logoutButton.addEventListener("click", function(event) {
             event.preventDefault(); // Prevent default redirect
 
-            // Fade out animation
-            document.body.classList.add('fade-out');
-
             // Perform necessary clean-up
-            setTimeout(function() {
-                window.location.href = "login.html"; // Redirect to login page
-            }, 500); // Wait for 0.5s before redirecting
+            window.location.href = "index.html"; // Redirect to login page
         });
     }
+ // Login form validation
+ var loginForm = document.getElementById('loginForm');
+ if (loginForm) {
+     loginForm.addEventListener('submit', function(event) {
+         event.preventDefault(); // Prevent default form submission
 
-    // Login form validation
-    var loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent default form submission
+         // Get username and password
+         var username = document.getElementById('username').value;
+         var password = document.getElementById('password').value;
 
-            // Get username and password
-            var username = document.getElementById('username').value;
-            var password = document.getElementById('password').value;
-
-            // Check credentials
-            if (username === 'aciregistrar' && password === 'admin') {
-                // Fade out animation
-                document.body.classList.add('fade-out');
-
-                // Redirect to index.html
-                setTimeout(function() {
-                    window.location.href = 'index.html';
-                }, 500); // Wait for 0.5s before redirecting
+         // Check credentials
+         if (username === 'aciregistrar' && password === 'admin') {
+             // Redirect to index.html
+             window.location.href = window.location.href = 'forms.html';
             } else {
                 alert('Invalid username or password. Please try again.');
             }
         });
     }
-
-    // Fade in animation
-    setTimeout(function() {
-        document.body.classList.remove('fade-out');
-    }, 1000); // Wait for 1s before removing fade-out class
 });
-
 
 // Event listener for submit button
 var submitButton = document.getElementById("submit");
