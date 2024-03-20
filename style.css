@@ -1,0 +1,109 @@
+body {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    background-color: #f2f2f2;
+}
+
+header {
+    text-align: center;
+    padding: 20px;
+    background-color: #ababab;
+    color: white;
+}
+
+.logo img {
+    width: 100px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.title {
+    font-size: 28px;
+    margin: 5px 0;
+}
+
+.subtitle {
+    font-size: 14px;
+    margin: 0;
+}
+
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+form input,
+form select,
+form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+form input[type="submit"] {
+    background-color: #a5a5a5;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form input[type="submit"]:hover {
+    background-color: #004976;
+}
+
+h1 {
+text-align: center;
+}
+
+
+/* I-center ang table */
+.table-container {
+max-width: 100%;
+margin: 20px auto;
+padding: 0 20px; /* Magdagdag ng padding sa bawat gilid */
+}
+
+/* Gawan ng responsive design ang table */
+#documentRequestsTable {
+width: 100%;
+border-collapse: collapse;
+margin: 0 auto;
+padding: 10px; /* Magdagdag ng padding sa bawat cell ng table */
+}
+
+#documentRequestsTable th,
+#documentRequestsTable td {
+border: 1px solid #ddd;
+padding: 12px;
+text-align: left;
+}
+
+#documentRequestsTable th {
+background-color: #f2f2f2;
+color: #333;
+}
+
+#documentRequestsTable tr:nth-child(even) {
+background-color: #f2f2f2;
+}
+
+#documentRequestsTable tr:hover {
+background-color: #ddd;
+}
