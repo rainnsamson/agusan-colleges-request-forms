@@ -24,51 +24,61 @@ const app = initializeApp(firebaseConfig);
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 
-// LOGIN AND LOGOUT
 document.addEventListener("DOMContentLoaded", function() {
+    // Login form
+    var loginForm = document.getElementById("loginForm");
     // Logout button
     var logoutButton = document.getElementById("logout");
+    // Content
+    var content = document.getElementById("content");
+    // Logout message
+    var logoutMessage = document.getElementById("logoutMessage");
 
-    // Attach event listener
-    if (logoutButton) {
-        logoutButton.addEventListener("click", function(event) {
-            event.preventDefault(); // Prevent default redirect
-
-            // Perform necessary clean-up
-            window.location.href = "index.html"; // Redirect to login page
-        });
-    }
- // Login form validation
- var loginForm = document.getElementById('loginForm');
-if (loginForm) {
-    loginForm.addEventListener('submit', function(event) {
+    // Attach event listener to login form
+    loginForm.addEventListener("submit", function(event) {
         event.preventDefault(); // Prevent default form submission
 
-        // Get username and password
-        var username = document.getElementById('username').value;
-        var password = document.getElementById('password').value;
-
         // Check credentials
-        if (username === 'aciregistrar' && password === 'admin') {
-            // Hide login form
-            loginForm.style.display = 'none';
-
-            // Display success message
-            var successMessage = document.createElement('p');
-            successMessage.textContent = 'Login successful. Redirecting...';
-            document.body.appendChild(successMessage);
-
-            // Simulate redirect after 2 seconds
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        if (username === "aciregistrar" && password === "admin") {
+            // Fade out login form
+            loginForm.classList.add("fade-in");
             setTimeout(function() {
-                window.location.href = 'forms.html';
-            }, 2000);
+                loginForm.style.display = "none";
+            }, 500);
+
+            // Fade in content
+            setTimeout(function() {
+                content.classList.add("fade-in");
+                content.style.display = "block";
+            }, 500);
         } else {
-            alert('Invalid username or password. Please try again.');
+            alert("Invalid username or password. Please try again.");
         }
     });
-}
 
+    // Attach event listener to logout button
+    logoutButton.addEventListener("click", function(event) {
+        event.preventDefault(); // Prevent default redirect
+
+        // Fade out content
+        content.classList.remove("fade-in");
+        setTimeout(function() {
+            content.style.display = "none";
+        }, 500);
+
+        // Display logout message
+        logoutMessage.classList.add("fade-in");
+        logoutMessage.style.display = "block";
+
+        // Redirect to login page after 2 seconds
+        setTimeout(function() {
+            window.location.href = "index.html";
+        }, 2000);
+    });
 });
+
 
 // Event listener for submit button
 var submitButton = document.getElementById("submit");
