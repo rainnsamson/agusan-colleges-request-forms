@@ -108,12 +108,11 @@ background-color: #f2f2f2;
 background-color: #ddd;
 }
 
-/* Hide elements by default */
-#loginForm, #logout, #content, #logoutMessage {
-    display: none;
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
 }
 
-/* Fade in animation */
 .fade-in {
     opacity: 1;
     transition: opacity 0.5s ease-in-out;

@@ -25,58 +25,53 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", function() {
-    // Login form
-    var loginForm = document.getElementById("loginForm");
     // Logout button
     var logoutButton = document.getElementById("logout");
-    // Content
-    var content = document.getElementById("content");
-    // Logout message
-    var logoutMessage = document.getElementById("logoutMessage");
 
-    // Attach event listener to login form
-    loginForm.addEventListener("submit", function(event) {
-        event.preventDefault(); // Prevent default form submission
+    // Attach event listener
+    if (logoutButton) {
+        logoutButton.addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default redirect
 
-        // Check credentials
-        var username = document.getElementById("username").value;
-        var password = document.getElementById("password").value;
-        if (username === "aciregistrar" && password === "admin") {
-            // Fade out login form
-            loginForm.classList.add("fade-in");
+            // Fade out animation
+            document.body.classList.add('fade-out');
+
+            // Perform necessary clean-up
             setTimeout(function() {
-                loginForm.style.display = "none";
-            }, 500);
+                window.location.href = "login.html"; // Redirect to login page
+            }, 500); // Wait for 0.5s before redirecting
+        });
+    }
 
-            // Fade in content
-            setTimeout(function() {
-                content.classList.add("fade-in");
-                content.style.display = "block";
-            }, 500);
-        } else {
-            alert("Invalid username or password. Please try again.");
-        }
-    });
+    // Login form validation
+    var loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
 
-    // Attach event listener to logout button
-    logoutButton.addEventListener("click", function(event) {
-        event.preventDefault(); // Prevent default redirect
+            // Get username and password
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
 
-        // Fade out content
-        content.classList.remove("fade-in");
-        setTimeout(function() {
-            content.style.display = "none";
-        }, 500);
+            // Check credentials
+            if (username === 'aciregistrar' && password === 'admin') {
+                // Fade out animation
+                document.body.classList.add('fade-out');
 
-        // Display logout message
-        logoutMessage.classList.add("fade-in");
-        logoutMessage.style.display = "block";
+                // Redirect to index.html
+                setTimeout(function() {
+                    window.location.href = 'index.html';
+                }, 500); // Wait for 0.5s before redirecting
+            } else {
+                alert('Invalid username or password. Please try again.');
+            }
+        });
+    }
 
-        // Redirect to login page after 2 seconds
-        setTimeout(function() {
-            window.location.href = "index.html";
-        }, 2000);
-    });
+    // Fade in animation
+    setTimeout(function() {
+        document.body.classList.remove('fade-out');
+    }, 1000); // Wait for 1s before removing fade-out class
 });
 
 
