@@ -40,23 +40,34 @@ document.addEventListener("DOMContentLoaded", function() {
     }
  // Login form validation
  var loginForm = document.getElementById('loginForm');
- if (loginForm) {
-     loginForm.addEventListener('submit', function(event) {
-         event.preventDefault(); // Prevent default form submission
+if (loginForm) {
+    loginForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
 
-         // Get username and password
-         var username = document.getElementById('username').value;
-         var password = document.getElementById('password').value;
+        // Get username and password
+        var username = document.getElementById('username').value;
+        var password = document.getElementById('password').value;
 
-         // Check credentials
-         if (username === 'aciregistrar' && password === 'admin') {
-             // Redirect to index.html
-             window.location.href = window.location.href = 'forms.html';
-            } else {
-                alert('Invalid username or password. Please try again.');
-            }
-        });
-    }
+        // Check credentials
+        if (username === 'aciregistrar' && password === 'admin') {
+            // Hide login form
+            loginForm.style.display = 'none';
+
+            // Display success message
+            var successMessage = document.createElement('p');
+            successMessage.textContent = 'Login successful. Redirecting...';
+            document.body.appendChild(successMessage);
+
+            // Simulate redirect after 2 seconds
+            setTimeout(function() {
+                window.location.href = 'forms.html';
+            }, 2000);
+        } else {
+            alert('Invalid username or password. Please try again.');
+        }
+    });
+}
+
 });
 
 // Event listener for submit button
