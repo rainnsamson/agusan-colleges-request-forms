@@ -24,6 +24,41 @@ const app = initializeApp(firebaseConfig);
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 
+// LOGIN AND LOGOUT
+document.addEventListener("DOMContentLoaded", function() {
+    // Logout button
+    var logoutButton = document.getElementById("logout");
+
+    // Attach event listener
+    if (logoutButton) {
+        logoutButton.addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default redirect
+
+            // Perform necessary clean-up
+            window.location.href = "index.html"; // Redirect to login page
+        });
+    }
+ // Login form validation
+ var loginForm = document.getElementById('loginForm');
+ if (loginForm) {
+     loginForm.addEventListener('submit', function(event) {
+         event.preventDefault(); // Prevent default form submission
+
+         // Get username and password
+         var username = document.getElementById('username').value;
+         var password = document.getElementById('password').value;
+
+         // Check credentials
+         if (username === 'aciregistrar' && password === 'admin') {
+             // Redirect to index.html
+             window.location.href = window.location.href = 'forms.html';
+            } else {
+                alert('Invalid username or password. Please try again.');
+            }
+        });
+    }
+});
+
 // Event listener for submit button
 var submitButton = document.getElementById("submit");
 if (submitButton) {
@@ -171,37 +206,3 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-// LOGIN AND LOGOUT
-document.addEventListener("DOMContentLoaded", function() {
-    // Logout button
-    var logoutButton = document.getElementById("logout");
-
-    // Attach event listener
-    if (logoutButton) {
-        logoutButton.addEventListener("click", function(event) {
-            event.preventDefault(); // Prevent default redirect
-
-            // Perform necessary clean-up
-            window.location.href = "login.html"; // Redirect to login page
-        });
-    }
- // Login form validation
- var loginForm = document.getElementById('loginForm');
- if (loginForm) {
-     loginForm.addEventListener('submit', function(event) {
-         event.preventDefault(); // Prevent default form submission
-
-         // Get username and password
-         var username = document.getElementById('username').value;
-         var password = document.getElementById('password').value;
-
-         // Check credentials
-         if (username === 'aciregistrar' && password === 'admin') {
-             // Redirect to index.html
-             window.location.href = window.location.href = 'index.html';
-            } else {
-                alert('Invalid username or password. Please try again.');
-            }
-        });
-    }
-});
