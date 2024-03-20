@@ -7,6 +7,7 @@ import {
     getDocs,
     updateDoc,
     doc,
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
 // Your web app's Firebase configuration
@@ -140,11 +141,12 @@ document.addEventListener("change", function (event) {
     }
 });
 
-// Display data in table
 document.addEventListener("DOMContentLoaded", function() {
     // Display data in table
     getDocs(collection(db, "Request")).then((querySnapshot) => {
+        var count = 0; // Initialize count
         querySnapshot.forEach((doc) => {
+            count++; // Increment count for each document
             var data = doc.data();
             var dateIssued = data.dateIssued ? data.dateIssued : ""; // Set initial value to empty string
             var dateIssuedInput = `
@@ -174,8 +176,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     }>Received</option>
                 </select>`;
 
+            var deleteIcon = `<i class="fas fa-trash-alt delete-icon hide" data-doc-id="${doc.id}"></i>`; // Delete icon
+
             var row = `
                 <tr>
+                    <td>${count}</td> <!-- Add the count -->
                     <td>${data.idNumber}</td>
                     <td>${data.surname}</td>
                     <td>${data.firstName}</td>
@@ -195,6 +200,9 @@ document.addEventListener("DOMContentLoaded", function() {
                             ${statusDropdown}
                         </div>
                     </td>
+                    <td style="text-align: center;">
+                        ${deleteIcon}
+                    </td>
                 </tr>
             `;
 
@@ -203,6 +211,72 @@ document.addEventListener("DOMContentLoaded", function() {
                 tableBody.innerHTML += row;
             }
         });
+
+        // Update data count
+        var dataCountElement = document.querySelector("#dataCount");
+        if (dataCountElement) {
+            dataCountElement.innerText = `Data Count: ${count}`;
+        }
+
+        // Hide the entire 'Action' column initially
+        var actionColumn = document.querySelectorAll("#documentRequestsTable tbody tr td:last-child");
+        actionColumn.forEach((column) => {
+            column.style.display = "none";
+        });
+
+        // Toggle visibility of 'Action' column when the lock icon is clicked
+        var lockIcon = document.querySelector("#lockIcon");
+        lockIcon.addEventListener("click", function() {
+            actionColumn.forEach((column) => {
+                column.style.display = column.style.display === "none" ? "" : "none";
+            });
+
+            // Change lock icon to unlock icon and vice versa
+            lockIcon.classList.toggle("fa-lock");
+            lockIcon.classList.toggle("fa-unlock");
+        });
     });
 });
+
+
+// Event listener for delete icon
+document.addEventListener("click", function (event) {
+    if (event.target.classList.contains("delete-icon")) {
+        const docId = event.target.getAttribute("data-doc-id");
+        if (confirm("Are you sure you want to delete this data?")) {
+            // Delete data from Firestore
+            deleteDoc(doc(db, "Request", docId))
+                .then(() => {
+                    alert("Data deleted");
+                    // Remove the row from the table
+                    event.target.closest("tr").remove();
+                    // Reload the page
+                    location.reload();
+                })
+                .catch((error) => {
+                    console.error("Error deleting document: ", error);
+                });
+        }
+    }
+});
+
+
+document.getElementById("statusFilter").addEventListener("change", function() {
+    var status = this.value; // Get the selected status
+    filterTable(status); // Filter the table based on the selected status
+});
+
+function filterTable(status) {
+    var rows = document.querySelectorAll("#documentRequestsTable tbody tr");
+    rows.forEach(function(row) {
+        var rowStatus = row.querySelector("td:nth-child(12) select").value; // Get the status of the row
+        if (status === "all" || rowStatus === status) {
+            row.style.display = ""; // Show the row if status is "all" or matches the selected status
+        } else {
+            row.style.display = "none"; // Hide the row if it doesn't match the selected status
+        }
+    });
+}
+
+
 

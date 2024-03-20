@@ -6,6 +6,8 @@
     <title>ACI Registrar Document Request Monitoring</title>
     <script type="module" src="./server.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
 </head>
 <body>
     <header>
@@ -13,11 +15,14 @@
             <img src="logo.png" alt="School Logo">
         </div>
         <div class="title">
-            AGUSAN COLLEGES, INCORPORATED
+            AGUSAN COLLEGES, INC.
         </div>
-        <div style="float: right; margin-top: -150px;"> <!-- I-wrap ang logout link sa loob ng div at ilagay ang float style at margin-top -->
-            <a href="#" id="logout">Log Out</a>
+        <div style="float: right; margin-top: -150px;">
+            <a href="#" id="logout">
+                <i class="fas fa-sign-out-alt"></i> Log Out
+            </a>
         </div>
+        
         <div class="subtitle">
             DEPARTMENT OF REGISTRATION AND RECORDS MANAGEMENT<br>
             M.H. Del Pilar St, Butuan City, Agusan Del Norte
@@ -65,32 +70,81 @@
         </form>
 
     <div class="table-container">
-        <h2>Document Requests Status</h2>
+        <div class="filter-container">
+            <h2>Document Requests Status</h2>
+            <div class="filter-wrapper">
+                <label for="statusFilter">Filter by Status:</label>
+                <select id="statusFilter">
+                    <option value="all">All</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Signature">Signature</option>
+                    <option value="Release">Released</option>
+                    <option value="Received">Received</option>
+                </select>
+            </div>
+        </div>
+        
+        <a href="#" onclick="toggleLock()">
+            <i id="lockIcon" class="fas fa-lock"></i>
+        </a>
         <table id="documentRequestsTable">
             <thead>
-              <tr>
-                <th>ID Number</th>
-                <th>Surname</th>
-                <th>First Name</th>
-                <th>Middle Name</th>
-                <th>Document Request</th>
-                <th>Purpose</th>
-                <th>Control Number</th>
-                <th>OR Number</th>
-                <th>Date Requested</th>
-                <th>Date Issued</th>
-                <th>Status</th>
-              </tr>
+                <tr>
+                    <th>No.</th>
+                    <th>ID Number</th>
+                    <th>Surname</th>
+                    <th>First Name</th>
+                    <th>Middle Name</th>
+                    <th>Document Request</th>
+                    <th>Purpose</th>
+                    <th>Control Number</th>
+                    <th>OR Number</th>
+                    <th>Date Requested</th>
+                    <th>Date Issued</th>
+                    <th>Status</th>
+                    <th class="actionColumn hide">Action</th>
+                </tr>
             </thead>
             <tbody>
-              <!-- Table rows will be dynamically added here -->
+                <!-- Table rows will be dynamically added here -->
             </tbody>
-          </table>
+        </table>
+        <h2 id="dataCount">Data Count:</h2>
+        
           
     </div>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        function toggleLock() {
+    const password = prompt("Enter password:");
+    if (password === "acihead") {
+        const actionColumn = document.querySelector('.actionColumn');
+        actionColumn.classList.toggle('hide');
+        const lockIcon = document.getElementById('lockIcon');
+        if (actionColumn.classList.contains('hide')) {
+            lockIcon.classList.remove('fa-unlock');
+            lockIcon.classList.add('fa-lock');
+            // Hide delete icons
+            document.querySelectorAll('.delete-icon').forEach(icon => {
+                icon.classList.add('hide');
+            });
+        } else {
+            lockIcon.classList.remove('fa-lock');
+            lockIcon.classList.add('fa-unlock');
+            // Show delete icons
+            document.querySelectorAll('.delete-icon').forEach(icon => {
+                icon.classList.remove('hide');
+            });
+        }
+    } else {
+        alert("Incorrect password. Please try again.");
+    }
+}
+
+    </script>
+    
 </body>
 </html>

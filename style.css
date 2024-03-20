@@ -78,6 +78,7 @@ text-align: center;
 max-width: 100%;
 margin: 20px auto;
 padding: 0 20px; /* Magdagdag ng padding sa bawat gilid */
+
 }
 
 /* Gawan ng responsive design ang table */
@@ -86,6 +87,7 @@ width: 100%;
 border-collapse: collapse;
 margin: 0 auto;
 padding: 10px; /* Magdagdag ng padding sa bawat cell ng table */
+margin-top: 10px;
 }
 
 #documentRequestsTable th,
@@ -108,12 +110,70 @@ background-color: #f2f2f2;
 background-color: #ddd;
 }
 
-.fade-out {
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
+td {
+    text-align: center; /* Center align all content in table cells */
 }
 
-.fade-in {
-    opacity: 1;
-    transition: opacity 0.5s ease-in-out;
+.delete-icon {
+    cursor: pointer; /* Change cursor to pointer on hover */
+    color: red; /* Set color to red */
 }
+
+h2 {
+    display: inline-block; /* Gawing inline-block ang h2 elements */
+    margin-right: 10px; /* Maglagay ng space sa kanan */
+    margin-bottom: 2px; 
+}
+
+#dataCount {
+    float: left; /* Ilagay sa kanan */
+}
+
+.hide {
+    display: none;
+}
+
+#filterContainer {
+    position: relative;
+}
+
+#lockIcon {
+    float: right;
+    margin-top: -70px; /* Adjust as needed */
+}
+
+#lockIcon {
+    float: right;
+}
+
+
+#statusFilter {
+    margin-top: 20px; /* Add spacing above */
+    display: inline-block; /* Make it an inline-block element */
+    float: right;
+    margin-left: 10px;
+    padding: 5px 10px; /* Add padding to increase size */
+    font-size: 16px; /* Increase font size */
+}
+
+.filter-container {
+    display: flex;
+    justify-content: space-between; /* Align items evenly */
+    align-items: center; /* Align items vertically */
+}
+
+.filter-wrapper {
+    display: flex;
+    align-items: baseline; /* Align items based on their baseline */
+    float: right;
+}
+
+.filter-wrapper label,
+.filter-wrapper select {
+    margin-right: 1px; /* Add some space between the label and select */
+}
+
+
+
+
+
