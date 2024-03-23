@@ -6,7 +6,7 @@ body {
     background-color: #f2f2f2;
 }
 
-header {
+.requestForm {
     text-align: center;
     padding: 20px;
     background-color: #ababab;
@@ -27,6 +27,92 @@ header {
 .subtitle {
     font-size: 14px;
     margin: 0;
+}
+
+.table-main {
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px;
+    background-color: white; 
+}
+
+
+.dateIssuedInput,
+.statusSelect {
+    font-size: 14px; 
+}
+
+.statusSelect {
+    width: 350px; 
+}
+
+#documentRequestsTable th,
+#documentRequestsTable td {
+    padding: 8px; 
+    text-align: left; 
+}
+
+#documentRequestsTable th {
+    background-color: #fafafa; 
+}
+
+.container {
+    max-width: 100%;
+    margin-top: 20px;
+}
+
+
+  .table th, .table td {
+    font-size: 14px; /* Adjust the font size as needed */
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap; /* Ito ay nagpapahintulot sa mga cell na hindi mag-wrap */
+    margin: 10px; /* Space sa labas ng table */
+    border-spacing: 0; /* Alisin ang default na spacing ng mga cells */
+}
+
+.table th,
+.table td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 10px; /* Space sa loob ng bawat cell */
+    border: 1px solid #ddd; /* Border para sa bawat cell */
+}
+
+
+
+/* Repeat para sa iba pang columns */
+
+/* Ito ay magbibigay ng background color sa alternating rows */
+.table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+/* I-adjust ang width ng 'Status' column */
+.table th:nth-child(14),
+.table td:nth-child(14) {
+    width: auto; /* I-adjust ang sukat depende sa pangangailangan */
+}
+
+/* I-adjust ang width ng input group */
+.input-group {
+    width: 100%;
+}
+
+.input-group {
+    width: 150px; /* o anumang haba na gusto mo */
+}
+
+
+header {
+    text-align: center;
+    padding: 20px;
+    background-color: #ababab;
+    color: white;
 }
 
 form {
@@ -71,109 +157,3 @@ form input[type="submit"]:hover {
 h1 {
 text-align: center;
 }
-
-
-/* I-center ang table */
-.table-container {
-max-width: 100%;
-margin: 20px auto;
-padding: 0 20px; /* Magdagdag ng padding sa bawat gilid */
-
-}
-
-/* Gawan ng responsive design ang table */
-#documentRequestsTable {
-width: 100%;
-border-collapse: collapse;
-margin: 0 auto;
-padding: 10px; /* Magdagdag ng padding sa bawat cell ng table */
-margin-top: 10px;
-}
-
-#documentRequestsTable th,
-#documentRequestsTable td {
-border: 1px solid #ddd;
-padding: 12px;
-text-align: left;
-}
-
-#documentRequestsTable th {
-background-color: #f2f2f2;
-color: #333;
-}
-
-#documentRequestsTable tr:nth-child(even) {
-background-color: #f2f2f2;
-}
-
-#documentRequestsTable tr:hover {
-background-color: #ddd;
-}
-
-td {
-    text-align: center; /* Center align all content in table cells */
-}
-
-.delete-icon {
-    cursor: pointer; /* Change cursor to pointer on hover */
-    color: red; /* Set color to red */
-}
-
-h2 {
-    display: inline-block; /* Gawing inline-block ang h2 elements */
-    margin-right: 10px; /* Maglagay ng space sa kanan */
-    margin-bottom: 2px; 
-}
-
-#dataCount {
-    float: left; /* Ilagay sa kanan */
-}
-
-.hide {
-    display: none;
-}
-
-#filterContainer {
-    position: relative;
-}
-
-#lockIcon {
-    float: right;
-    margin-top: -70px; /* Adjust as needed */
-}
-
-#lockIcon {
-    float: right;
-}
-
-
-#statusFilter {
-    margin-top: 20px; /* Add spacing above */
-    display: inline-block; /* Make it an inline-block element */
-    float: right;
-    margin-left: 10px;
-    padding: 5px 10px; /* Add padding to increase size */
-    font-size: 16px; /* Increase font size */
-}
-
-.filter-container {
-    display: flex;
-    justify-content: space-between; /* Align items evenly */
-    align-items: center; /* Align items vertically */
-}
-
-.filter-wrapper {
-    display: flex;
-    align-items: baseline; /* Align items based on their baseline */
-    float: right;
-}
-
-.filter-wrapper label,
-.filter-wrapper select {
-    margin-right: 1px; /* Add some space between the label and select */
-}
-
-
-
-
-

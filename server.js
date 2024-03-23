@@ -2,13 +2,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
 import {
     getFirestore,
-    addDoc,
     collection,
     getDocs,
     updateDoc,
     doc,
-    deleteDoc
+    addDoc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -39,6 +40,7 @@ document.addEventListener("DOMContentLoaded", function() {
             window.location.href = "index.html"; // Redirect to login page
         });
     }
+    
  // Login form validation
  var loginForm = document.getElementById('loginForm');
  if (loginForm) {
@@ -71,6 +73,8 @@ if (submitButton) {
         var surname = document.getElementById("surname").value;
         var firstName = document.getElementById("firstName").value;
         var middleName = document.getElementById("middleName").value;
+        var contactNumber = document.getElementById("contactNumber").value;
+        var emailAddress = document.getElementById("emailAddress").value;
         var documentRequest = document.getElementById("documentRequest").value;
         var purpose = document.getElementById("purpose").value;
         var controlNumber = document.getElementById("controlNumber").value;
@@ -84,6 +88,8 @@ if (submitButton) {
             surname: surname,
             firstName: firstName,
             middleName: middleName,
+            contactNumber: contactNumber,
+            emailAddress: emailAddress,
             documentRequest: documentRequest,
             purpose: purpose,
             controlNumber: controlNumber,
@@ -91,6 +97,8 @@ if (submitButton) {
             dateRequested: dateRequested,
             dateIssued: "", // Set initial value to empty string
             status: status, // Save status value
+            user: "", // Save user as blank
+            remarks: "", // Save remarks as blank
         })
             .then(() => {
                 alert("Request added");
@@ -105,41 +113,6 @@ if (submitButton) {
     });
 }
 
-// Event listener for status change and date issued update
-document.addEventListener("change", function (event) {
-    if (event.target.classList.contains("statusSelect")) {
-        const docId = event.target.getAttribute("data-doc-id");
-        const newStatus = event.target.value;
-
-        // Update status in Firestore
-        updateDoc(doc(db, "Request", docId), {
-            status: newStatus,
-        })
-            .then(() => {
-                alert("Status updated");
-                // Reload the page to display the updated data
-                location.reload();
-            })
-            .catch((error) => {
-                console.error("Error updating document: ", error);
-            });
-    }
-
-    if (event.target.classList.contains("dateIssuedInput")) {
-        const docId = event.target.getAttribute("data-doc-id");
-        const newDateIssued = event.target.value;
-
-        updateDoc(doc(db, "Request", docId), {
-            dateIssued: newDateIssued,
-        })
-            .then(() => {
-                alert("Date Issued updated");
-            })
-            .catch((error) => {
-                console.error("Error updating document: ", error);
-            });
-    }
-});
 
 document.addEventListener("DOMContentLoaded", function() {
     // Display data in table
@@ -153,9 +126,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 <div class="input-group">
                     <input type="date" class="form-control icon-input dateIssuedInput" ${
                         data.dateIssued ? `value="${data.dateIssued}"` : ""
-                    } data-doc-id="${doc.id}" ${dateIssued ?? "disabled"}>
+                    } data-doc-id="${doc.id}" id="dateIssuedInput-${doc.id}">
                 </div>`;
-
+        
             // Dropdown for status
             var statusDropdown = `
                 <select class="form-select statusSelect" data-doc-id="${doc.id}">
@@ -173,38 +146,67 @@ document.addEventListener("DOMContentLoaded", function() {
                     }>Release</option>
                     <option value="Received" ${
                         data.status === "Received" ? "selected" : ""
-                    }>Received</option>
+                    }>Received by Student</option>
                 </select>`;
+        
+            // Dropdown for user
+            var userDropdown = `
+                <div class="input-group">
+                    <select class="form-select userSelect" id="userSelect${count}" data-doc-id="${doc.id}">
+                        <option value="" disabled selected>Please select user</option>
+                        <option value="jbermoy" ${data.user === "jbermoy" ? "selected" : ""}>jbermoy</option>
+                        <option value="nclaro" ${data.user === "nclaro" ? "selected" : ""}>nclaro</option>
+                        <option value="rbasanal" ${data.user === "rbasanal" ? "selected" : ""}>rbasanal</option>
+                    </select>
+                </div>`;
 
-            var deleteIcon = `<i class="fas fa-trash-alt delete-icon hide" data-doc-id="${doc.id}"></i>`; // Delete icon
+           // Input field for remarks
+var remarksInput = `<input type="text" class="form-control remarks-input" value="${data.remarks}" data-doc-id="${doc.id}">`;
+
+            var sendEmailButton = "";
+            if (data.status === "Release") {
+                sendEmailButton = `<button type="button" class="btn btn-primary send-email-btn" data-doc-id="${doc.id}">Send</button>`;
+            }
 
             var row = `
-                <tr>
-                    <td>${count}</td> <!-- Add the count -->
-                    <td>${data.idNumber}</td>
-                    <td>${data.surname}</td>
-                    <td>${data.firstName}</td>
-                    <td>${data.middleName}</td>
-                    <td>${data.documentRequest}</td>
-                    <td>${data.purpose}</td>
-                    <td>${data.controlNumber}</td>
-                    <td>${data.orNumber}</td>
-                    <td>${data.dateRequested}</td>
-                    <td>
-                        <div class="input-group">
-                            ${dateIssuedInput}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="input-group">
-                            ${statusDropdown}
-                        </div>
-                    </td>
-                    <td style="text-align: center;">
-                        ${deleteIcon}
-                    </td>
-                </tr>
-            `;
+<tr>
+    <td>${count}</td> <!-- Add the count -->
+    <td>${data.idNumber}</td>
+    <td>${data.surname}</td>
+    <td>${data.firstName}</td>
+    <td>${data.middleName}</td>
+    <td>${data.contactNumber}</td>
+    <td>${data.emailAddress}</td>
+    <td>${data.documentRequest}</td>
+    <td>${data.purpose}</td>
+    <td>${data.controlNumber}</td>
+    <td>${data.orNumber}</td>
+    <td>${data.dateRequested}</td>
+    <td>
+        <div class="input-group">
+            ${dateIssuedInput}
+        </div>
+    </td>
+    <td>
+        <div class="input-group">
+            ${statusDropdown}
+        </div>
+    </td>
+    <td>
+        <div class="input-group">
+            ${userDropdown}
+        </div>
+    </td>
+    <td>
+        <div class="input-group">
+            ${remarksInput}
+        </div>
+    </td>
+    <td style="text-align: center;">
+        ${sendEmailButton}
+    </td>
+</tr>
+`;
 
             var tableBody = document.querySelector("#documentRequestsTable tbody");
             if (tableBody) {
@@ -218,48 +220,94 @@ document.addEventListener("DOMContentLoaded", function() {
             dataCountElement.innerText = `Data Count: ${count}`;
         }
 
-        // Hide the entire 'Action' column initially
-        var actionColumn = document.querySelectorAll("#documentRequestsTable tbody tr td:last-child");
-        actionColumn.forEach((column) => {
-            column.style.display = "none";
+        // Event listener for status change
+        var statusSelects = document.querySelectorAll(".statusSelect");
+        statusSelects.forEach((select) => {
+            // Save the original value
+            select.setAttribute("data-original-value", select.value);
+
+            select.addEventListener("change", function() {
+                var newStatus = this.value;
+                var docId = this.getAttribute("data-doc-id");
+                if (confirm("Are you sure you want to change the status?")) {
+                    // User clicked OK, proceed with status update
+                    updateDoc(doc(db, "Request", docId), { status: newStatus })
+                        .then(() => {
+                            alert("Status updated successfully");
+                            // Reload the page
+                            location.reload();
+                        })
+                        .catch((error) => {
+                            console.error("Error updating status: ", error);
+                        });
+                } else {
+                    // User clicked Cancel, do nothing
+                    // Reset the select element to its original value
+                    this.value = this.getAttribute("data-original-value");
+                }
+            });
         });
 
-        // Toggle visibility of 'Action' column when the lock icon is clicked
-        var lockIcon = document.querySelector("#lockIcon");
-        lockIcon.addEventListener("click", function() {
-            actionColumn.forEach((column) => {
-                column.style.display = column.style.display === "none" ? "" : "none";
+        // Event listener for user change
+        var userSelects = document.querySelectorAll(".userSelect");
+        userSelects.forEach((select) => {
+            select.addEventListener("change", function() {
+                var newUser = this.value;
+                var docId = this.getAttribute("data-doc-id");
+                // Check if the selected user is not blank and confirm update
+                if (newUser !== "" && confirm("Are you sure you want to update the user?")) {
+                    updateDoc(doc(db, "Request", docId), { user: newUser })
+                        .then(() => {
+                            alert("User updated successfully");
+                        })
+                        .catch((error) => {
+                            console.error("Error updating user: ", error);
+                        });
+                } else {
+                    // Reset the select element to its original value
+                    this.value = this.getAttribute("data-original-value");
+                }
             });
+        });
 
-            // Change lock icon to unlock icon and vice versa
-            lockIcon.classList.toggle("fa-lock");
-            lockIcon.classList.toggle("fa-unlock");
+        // Event listener for remarks input field
+        var remarksInputs = document.querySelectorAll(".remarks-input");
+        remarksInputs.forEach((input) => {
+            input.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault(); // Prevent default behavior (e.g., form submission)
+                    var remarks = this.value;
+                    var docId = this.getAttribute("data-doc-id");
+                    if (confirm("Are you sure you want to update remarks?")) {
+                        updateDoc(doc(db, "Request", docId), {
+                            remarks: remarks
+                        }).then(() => {
+                            console.log("Document successfully updated!");
+                        }).catch((error) => {
+                            console.error("Error updating document: ", error);
+                        });
+                    }
+                }
+            });
+        });
+
+        // Event listener for date issued input field
+        var dateIssuedInputs = document.querySelectorAll(".dateIssuedInput");
+        dateIssuedInputs.forEach((input) => {
+            input.addEventListener("change", function() {
+                var newDateIssued = this.value;
+                var docId = this.getAttribute("data-doc-id");
+                updateDoc(doc(db, "Request", docId), { dateIssued: newDateIssued })
+                    .then(() => {
+                        console.log("Date Issued updated successfully");
+                    })
+                    .catch((error) => {
+                        console.error("Error updating Date Issued: ", error);
+                    });
+            });
         });
     });
 });
-
-
-// Event listener for delete icon
-document.addEventListener("click", function (event) {
-    if (event.target.classList.contains("delete-icon")) {
-        const docId = event.target.getAttribute("data-doc-id");
-        if (confirm("Are you sure you want to delete this data?")) {
-            // Delete data from Firestore
-            deleteDoc(doc(db, "Request", docId))
-                .then(() => {
-                    alert("Data deleted");
-                    // Remove the row from the table
-                    event.target.closest("tr").remove();
-                    // Reload the page
-                    location.reload();
-                })
-                .catch((error) => {
-                    console.error("Error deleting document: ", error);
-                });
-        }
-    }
-});
-
 
 document.getElementById("statusFilter").addEventListener("change", function() {
     var status = this.value; // Get the selected status
@@ -269,7 +317,7 @@ document.getElementById("statusFilter").addEventListener("change", function() {
 function filterTable(status) {
     var rows = document.querySelectorAll("#documentRequestsTable tbody tr");
     rows.forEach(function(row) {
-        var rowStatus = row.querySelector("td:nth-child(12) select").value; // Get the status of the row
+        var rowStatus = row.querySelector("td:nth-child(14) select").value; // Get the status of the row
         if (status === "all" || rowStatus === status) {
             row.style.display = ""; // Show the row if status is "all" or matches the selected status
         } else {
@@ -278,5 +326,116 @@ function filterTable(status) {
     });
 }
 
+document.addEventListener("click", function(event) {
+    if (event.target.classList.contains("send-email-btn")) {
+        var docId = event.target.getAttribute("data-doc-id");
+        var docRef = doc(db, "Request", docId);
+        getDoc(docRef)
+            .then((doc) => {
+                if (doc.exists()) {
+                    var data = doc.data();
+                    // Populate modal form fields
+                    document.getElementById("to_email").value = data.to_email || ''; // Use the email from the database, or an empty string if undefined
+                    document.getElementById("sender").value = 'registrar_office@aci.edu.ph'; // Set default sender email
+
+                    // Show the modal
+                    var modal = new bootstrap.Modal(document.getElementById('sendEmailModal'));
+                    modal.show();
+                } else {
+                    console.log("No such document!");
+                }
+            })
+            .catch((error) => {
+                console.error("Error getting document:", error);
+            });
+    }
+});
+
+document.getElementById('sendEmail').addEventListener('click', function() {
+    var sender = document.getElementById('sender').value;
+    var to_email = document.getElementById('to_email').value;
+    var subject = document.getElementById('subject').value;
+
+    var templateParams = {
+        sender: sender,
+        to_email: to_email,
+        subject: subject
+    };
+
+    emailjs.send('service_lk0vafp', 'template_nn5qpym', templateParams)
+        .then(function(response) {
+            console.log('Email sent successfully', response);
+            alert('Email sent successfully');
+            document.getElementById('subject').value = '';
+            $('#sendEmailModal').modal('hide'); // Hide modal
+        }, function(error) {
+            console.error('Email sending failed', error);
+            alert('Email sending failed');
+        });
+});
+
+// Close modal when 'Close' button or 'x' is clicked
+document.querySelector('#sendEmailModal .btn-close').addEventListener('click', function() {
+    $('#sendEmailModal').modal('hide');
+});
+
+// Close modal when 'x' is clicked
+document.querySelector('#sendEmailModal .modal-header button').addEventListener('click', function() {
+    $('#sendEmailModal').modal('hide');
+});
+
+// Get the modal element
+const createRequestModal = document.getElementById('createRequestModal');
+// Get the link element
+const createRequestLink = document.getElementById('createRequestLink');
+
+// Add click event listener to the link
+createRequestLink.addEventListener('click', function (event) {
+    event.preventDefault(); // Prevent default link behavior
+    // Show the modal
+    var modal = new bootstrap.Modal(createRequestModal);
+    modal.show();
+});
+
+document.addEventListener("click", function(event) {
+    if (event.target.classList.contains("send-email-btn")) {
+        var docId = event.target.getAttribute("data-doc-id");
+        var docRef = doc(db, "Request", docId);
+        getDoc(docRef)
+            .then((doc) => {
+                if (doc.exists()) {
+                    var data = doc.data();
+                    // Populate modal form fields
+                    document.getElementById("to_email").value = data.emailAddress || ''; // Use the email from the database, or an empty string if undefined
+                    document.getElementById("sender").value = 'registrar_office@aci.edu.ph'; // Set default sender email
+
+                    // Set up event listener for Send button inside modal
+                    document.getElementById("sendEmail").addEventListener("click", function() {
+                        // Prepare email template
+                        var templateParams = {
+                            to_email: data.emailAddress,
+                           
+                        };
+
+                        // Send email using emailjs
+                        emailjs.send('service_lk0vafp', 'template_nn5qpym', templateParams)
+                            .then(function(response) {
+                                console.log('Email sent successfully:', response);
+                                // Close the modal
+                                var modal = bootstrap.Modal.getInstance(document.getElementById('sendEmailModal'));
+                                modal.hide();
+                            }, function(error) {
+                                console.error('Email sending failed:', error);
+                            });
+                    });
+                } else {
+                    console.log("No such document!");
+                }
+            })
+            .catch((error) => {
+                console.error("Error getting document:", error);
+            });
+    }
+});
 
 
