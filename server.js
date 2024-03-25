@@ -62,59 +62,63 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// Event listener for submit button
-var submitButton = document.getElementById("submit");
-if (submitButton) {
-    submitButton.addEventListener("click", function (e) {
-        e.preventDefault(); // Prevent the form from submitting normally
+document.addEventListener("DOMContentLoaded", function() {
+    // Event listener for submit button
+    var submitButton = document.getElementById("submit");
+    if (submitButton) {
+        submitButton.addEventListener("click", function(e) {
+            e.preventDefault(); // Prevent the form from submitting normally
 
-        // Retrieve all form fields
-        var idNumber = document.getElementById("idNumber").value;
-        var surname = document.getElementById("surname").value;
-        var firstName = document.getElementById("firstName").value;
-        var middleName = document.getElementById("middleName").value;
-        var contactNumber = document.getElementById("contactNumber").value;
-        var emailAddress = document.getElementById("emailAddress").value;
-        var documentRequest = document.getElementById("documentRequest").value;
-        var purpose = document.getElementById("purpose").value;
-        var controlNumber = document.getElementById("controlNumber").value;
-        var orNumber = document.getElementById("orNumber").value;
-        var dateRequested = document.getElementById("dateRequested").value;
-        var status = "Pending"; // Default status is 'Pending' for new requests
+            // Retrieve all form fields
+            var idNumber = document.getElementById("idNumber").value;
+            var surname = document.getElementById("surname").value;
+            var firstName = document.getElementById("firstName").value;
+            var middleName = document.getElementById("middleName").value;
+            var contactNumber = document.getElementById("contactNumber").value;
+            var emailAddress = document.getElementById("emailAddress").value;
+            var documentRequestDropdown = document.getElementById("documentRequest");
+            var documentRequestValue = documentRequestDropdown.options[documentRequestDropdown.selectedIndex].text; // Gets the selected text from the dropdown
+            var purpose = document.getElementById("purpose").value;
+            var controlNumber = document.getElementById("controlNumber").value;
+            var orNumber = document.getElementById("orNumber").value;
+            var dateRequested = document.getElementById("dateRequested").value;
+            var status = "Pending"; // Default status is 'Pending' for new requests
 
-        // Add a new document in collection "Request"
-        addDoc(collection(db, "Request"), {
-            idNumber: idNumber,
-            surname: surname,
-            firstName: firstName,
-            middleName: middleName,
-            contactNumber: contactNumber,
-            emailAddress: emailAddress,
-            documentRequest: documentRequest,
-            purpose: purpose,
-            controlNumber: controlNumber,
-            orNumber: orNumber,
-            dateRequested: dateRequested,
-            dateIssued: "", // Set initial value to empty string
-            status: status, // Save status value
-            user: "", // Save user as blank
-            remarks: "", // Save remarks as blank
-        })
-            .then(() => {
-                alert("Request added");
-                // Clear the form after successful submission
-                document.getElementById("documentRequestForm").reset();
-                // Reload the page to display the new data
-                location.reload();
+            // Add a new document in collection "Request"
+            addDoc(collection(db, "Request"), {
+                idNumber: idNumber,
+                surname: surname,
+                firstName: firstName,
+                middleName: middleName,
+                contactNumber: contactNumber,
+                emailAddress: emailAddress,
+                documentRequest: documentRequestValue, // Save the selected text from the dropdown
+                purpose: purpose,
+                controlNumber: controlNumber,
+                orNumber: orNumber,
+                dateRequested: dateRequested,
+                dateIssued: "", // Set initial value to empty string
+                status: status, // Save status value
+                user: "", // Save user as blank
+                remarks: "", // Save remarks as blank
             })
-            .catch((error) => {
-                console.error("Error adding document: ", error);
-            });
-    });
-}
+                .then(() => {
+                    alert("Request added");
+                    // Clear the form after successful submission
+                    document.getElementById("documentRequestForm").reset();
+                    // Reload the page to display the new data
+                    location.reload();
+                })
+                .catch((error) => {
+                    console.error("Error adding document: ", error);
+                });
+        });
+    }
+});
 
 
 document.addEventListener("DOMContentLoaded", function() {
+    
     // Display data in table
     getDocs(collection(db, "Request")).then((querySnapshot) => {
         var count = 0; // Initialize count
@@ -157,6 +161,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         <option value="jbermoy" ${data.user === "jbermoy" ? "selected" : ""}>jbermoy</option>
                         <option value="nclaro" ${data.user === "nclaro" ? "selected" : ""}>nclaro</option>
                         <option value="rbasanal" ${data.user === "rbasanal" ? "selected" : ""}>rbasanal</option>
+                        <option value="fodlime" ${data.user === "fodlime" ? "selected" : ""}>fodlime</option>
                     </select>
                 </div>`;
 
@@ -205,6 +210,10 @@ var remarksInput = `<input type="text" class="form-control remarks-input" value=
     <td style="text-align: center;">
         ${sendEmailButton}
     </td>
+    <td style="text-align: center;">
+    <button type="button" class="btn btn-primary edit-btn" data-doc-id="${doc.id}">Edit</button>
+</td>
+
 </tr>
 `;
 
@@ -335,8 +344,7 @@ document.addEventListener("click", function(event) {
                 if (doc.exists()) {
                     var data = doc.data();
                     // Populate modal form fields
-                    document.getElementById("to_email").value = data.to_email || ''; // Use the email from the database, or an empty string if undefined
-                    document.getElementById("sender").value = 'registrar_office@aci.edu.ph'; // Set default sender email
+                    document.getElementById("to_email").value = data.to_email;
 
                     // Show the modal
                     var modal = new bootstrap.Modal(document.getElementById('sendEmailModal'));
@@ -351,28 +359,6 @@ document.addEventListener("click", function(event) {
     }
 });
 
-document.getElementById('sendEmail').addEventListener('click', function() {
-    var sender = document.getElementById('sender').value;
-    var to_email = document.getElementById('to_email').value;
-    var subject = document.getElementById('subject').value;
-
-    var templateParams = {
-        sender: sender,
-        to_email: to_email,
-        subject: subject
-    };
-
-    emailjs.send('service_lk0vafp', 'template_nn5qpym', templateParams)
-        .then(function(response) {
-            console.log('Email sent successfully', response);
-            alert('Email sent successfully');
-            document.getElementById('subject').value = '';
-            $('#sendEmailModal').modal('hide'); // Hide modal
-        }, function(error) {
-            console.error('Email sending failed', error);
-            alert('Email sending failed');
-        });
-});
 
 // Close modal when 'Close' button or 'x' is clicked
 document.querySelector('#sendEmailModal .btn-close').addEventListener('click', function() {
@@ -388,6 +374,8 @@ document.querySelector('#sendEmailModal .modal-header button').addEventListener(
 const createRequestModal = document.getElementById('createRequestModal');
 // Get the link element
 const createRequestLink = document.getElementById('createRequestLink');
+// Get the save button element
+const saveEdit = document.getElementById('saveEdit');
 
 // Add click event listener to the link
 createRequestLink.addEventListener('click', function (event) {
@@ -395,6 +383,13 @@ createRequestLink.addEventListener('click', function (event) {
     // Show the modal
     var modal = new bootstrap.Modal(createRequestModal);
     modal.show();
+
+    // Hide the save button
+    if (saveEdit) {
+        saveEdit.style.display = "none"; // or visibility: hidden;
+    } else {
+        console.log("Save button not found!");
+    }
 });
 
 document.addEventListener("click", function(event) {
@@ -408,25 +403,33 @@ document.addEventListener("click", function(event) {
                     // Populate modal form fields
                     document.getElementById("to_email").value = data.emailAddress || ''; // Use the email from the database, or an empty string if undefined
                     document.getElementById("sender").value = 'registrar_office@aci.edu.ph'; // Set default sender email
+                    document.getElementById("subject").value = ""; // Set email subject
 
                     // Set up event listener for Send button inside modal
-                    document.getElementById("sendEmail").addEventListener("click", function() {
-                        // Prepare email template
-                        var templateParams = {
-                            to_email: data.emailAddress,
-                           
-                        };
+                    var sendButton = document.getElementById("sendEmail");
+                    var emailSent = false;
+                    sendButton.addEventListener("click", function sendEmailHandler() {
+                        if (!emailSent) {
+                            // Prepare email template
+                            var templateParams = {
+                                to_email: data.emailAddress,
+                                subject: document.getElementById("subject").value
+                            };
 
-                        // Send email using emailjs
-                        emailjs.send('service_lk0vafp', 'template_nn5qpym', templateParams)
-                            .then(function(response) {
-                                console.log('Email sent successfully:', response);
-                                // Close the modal
-                                var modal = bootstrap.Modal.getInstance(document.getElementById('sendEmailModal'));
-                                modal.hide();
-                            }, function(error) {
-                                console.error('Email sending failed:', error);
-                            });
+                            // Send email using emailjs
+                            emailjs.send('service_lk0vafp', 'template_nn5qpym', templateParams)
+                                .then(function(response) {
+                                    alert('Email sent successfully:', response);
+                                    // Close the modal
+                                    var modal = bootstrap.Modal.getInstance(document.getElementById('sendEmailModal'));
+                                    modal.hide();
+                                }, function(error) {
+                                    alert('Email sending failed:', error);
+                                });
+
+                            emailSent = true; // Update flag to indicate email has been sent
+                        }
+                        sendButton.removeEventListener("click", sendEmailHandler);
                     });
                 } else {
                     console.log("No such document!");
@@ -437,5 +440,92 @@ document.addEventListener("click", function(event) {
             });
     }
 });
+
+
+// UPDATE OR EDIT DATA
+document.addEventListener("click", function(event) {
+    if (event.target.classList.contains("edit-btn")) {
+        var docId = event.target.getAttribute("data-doc-id");
+        if (!docId) {
+            console.error("Document ID is missing!");
+            return;
+        }
+        var docRef = doc(db, "Request", docId);
+        getDoc(docRef)
+            .then((doc) => {
+                if (doc.exists()) {
+                    var data = doc.data();
+                    console.log("Retrieved data:", data);
+                    // Populate modal form fields with data from Firestore document
+                    document.getElementById("idNumber").value = data.idNumber;
+                    document.getElementById("surname").value = data.surname;
+                    document.getElementById("firstName").value = data.firstName;
+                    document.getElementById("middleName").value = data.middleName;
+                    document.getElementById("contactNumber").value = data.contactNumber;
+                    document.getElementById("emailAddress").value = data.emailAddress;
+                    document.getElementById("documentRequest").value = data.documentRequest;
+                    document.getElementById("purpose").value = data.purpose;
+                    document.getElementById("controlNumber").value = data.controlNumber;
+                    document.getElementById("orNumber").value = data.orNumber;
+                    document.getElementById("dateRequested").value = data.dateRequested;
+
+                    // Show the modal if it exists
+                    var modalElement = document.getElementById('createRequestModal');
+                    if (modalElement) {
+                        var modal = new bootstrap.Modal(modalElement);
+                        modal.show();
+
+                        // Hide the submit button
+                        var submit = document.getElementById("submit");
+                        if (submit) {
+                            submit.style.display = "none"; // or visibility: hidden;
+                        } else {
+                            console.log("Submit button not found!");
+                        }
+
+                        // Save button inside the modal
+                        var saveEdit = document.getElementById("saveEdit");
+                        saveEdit.addEventListener("click", function() {
+                            // Update document with new data
+                            updateDoc(docRef, {
+                                idNumber: document.getElementById("idNumber").value,
+                                surname: document.getElementById("surname").value,
+                                firstName: document.getElementById("firstName").value,
+                                middleName: document.getElementById("middleName").value,
+                                contactNumber: document.getElementById("contactNumber").value,
+                                emailAddress: document.getElementById("emailAddress").value,
+                                documentRequest: document.getElementById("documentRequest").value,
+                                purpose: document.getElementById("purpose").value,
+                                controlNumber: document.getElementById("controlNumber").value,
+                                orNumber: document.getElementById("orNumber").value,
+                                dateRequested: document.getElementById("dateRequested").value,
+                                // Update other fields here...
+                            })
+                            .then(() => {
+                                console.log("Document successfully updated!");
+                                // Close the modal after saving
+                                modal.hide();
+                                // Reload the page
+                                location.reload();
+                            })
+                            .catch((error) => {
+                                console.error("Error updating document:", error);
+                            });
+                        });
+                    } else {
+                        console.log("Modal element not found!");
+                    }
+                } else {
+                    console.log("No such document!");
+                }
+            })
+            .catch((error) => {
+                console.error("Error getting document:", error);
+            });
+    }
+});
+
+
+
 
 
