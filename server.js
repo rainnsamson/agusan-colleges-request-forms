@@ -174,27 +174,95 @@ document
     $("#sendEmailModal").modal("hide");
   });
 
-// Get the modal element
-const createRequestModal = document.getElementById("createRequestModal");
-// Get the link element
-const createRequestLink = document.getElementById("createRequestLink");
-// Get the save button element
-const saveEdit = document.getElementById("saveEdit");
-
-// Add click event listener to the link
-createRequestLink.addEventListener("click", function (event) {
-  event.preventDefault(); // Prevent default link behavior
-  // Show the modal
-  var modal = new bootstrap.Modal(createRequestModal);
-  modal.show();
-
-  // Hide the save button
-  if (saveEdit) {
-    saveEdit.style.display = "none"; // or visibility: hidden;
-  } else {
-    console.log("Save button not found!");
-  }
-});
+  document.addEventListener("DOMContentLoaded", function () {
+    // Get the modal element
+    const createRequestModal = document.getElementById("createRequestModal");
+    // Get the link element for creating a request
+    const createRequestLink = document.getElementById("createRequestLink");
+    // Get the save button element
+    const saveEdit = document.getElementById("saveEdit");
+    // Get the submit button element
+    const submitButton = document.getElementById("submit");
+  
+    // Add click event listener to the link for creating a request
+    createRequestLink.addEventListener("click", function (event) {
+      event.preventDefault(); // Prevent default link behavior
+      // Show the modal
+      var modal = new bootstrap.Modal(createRequestModal);
+      modal.show();
+  
+      // Hide the save button and show the submit button when creating a request
+      if (saveEdit && submitButton) {
+        saveEdit.style.display = "none"; // or visibility: hidden;
+        submitButton.style.display = "inline-block"; // or visibility: visible;
+      } else {
+        console.log("Save or submit button not found!");
+      }
+  
+      // Clear the form fields
+      document.getElementById("idNumber").value = "";
+      document.getElementById("surname").value = "";
+      document.getElementById("firstName").value = "";
+      document.getElementById("middleName").value = "";
+      document.getElementById("contactNumber").value = "";
+      document.getElementById("emailAddress").value = "";
+      document.getElementById("documentRequest").value = "";
+      document.getElementById("purpose").value = "";
+      document.getElementById("controlNumber").value = "";
+      document.getElementById("orNumber").value = "";
+      document.getElementById("dateRequested").value = "";
+    });
+  
+    // Event listener for edit button click
+    document.addEventListener("click", function (event) {
+      if (event.target.classList.contains("edit-btn")) {
+        // Show the save button and hide the submit button when editing
+        if (saveEdit && submitButton) {
+          saveEdit.style.display = "inline-block"; // or visibility: visible;
+          submitButton.style.display = "none"; // or visibility: hidden;
+        } else {
+          console.log("Save or submit button not found!");
+        }
+  
+        // Populate the form fields with the data to edit
+        var docId = event.target.getAttribute("data-doc-id");
+        var docRef = doc(db, "Request", docId);
+        getDoc(docRef)
+          .then((doc) => {
+            if (doc.exists()) {
+              var data = doc.data();
+              document.getElementById("idNumber").value = data.idNumber;
+              document.getElementById("surname").value = data.surname;
+              document.getElementById("firstName").value = data.firstName;
+              document.getElementById("middleName").value = data.middleName;
+              document.getElementById("contactNumber").value = data.contactNumber;
+              document.getElementById("emailAddress").value = data.emailAddress;
+              document.getElementById("documentRequest").value = data.documentRequest;
+              document.getElementById("purpose").value = data.purpose;
+              document.getElementById("controlNumber").value = data.controlNumber;
+              document.getElementById("orNumber").value = data.orNumber;
+              document.getElementById("dateRequested").value = data.dateRequested;
+            } else {
+              console.log("Document not found!");
+            }
+          })
+          .catch((error) => {
+            console.error("Error getting document:", error);
+          });
+      }
+    });
+  
+    // Event listener for closing the modal
+    document.querySelector("#createRequestModal .btn-close").addEventListener("click", function () {
+      // Hide the save button when closing the modal
+      if (saveEdit) {
+        saveEdit.style.display = "none"; // or visibility: hidden;
+      } else {
+        console.log("Save button not found!");
+      }
+    });
+  });
+  
 
 document.addEventListener("click", function (event) {
   if (event.target.classList.contains("send-email-btn")) {
