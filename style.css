@@ -158,3 +158,35 @@ h1 {
 text-align: center;
 }
 
+.dropdown-toggle.status-dropdown {
+    width: 150px !important; /* Set the width of the dropdown toggle */
+}
+
+.dropdown-menu.dropdown-menu-end {
+    min-width: 150px; /* Set the minimum width of the dropdown menu */
+}
+
+.user-select {
+    width: 150px; /* Adjust width as needed */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.remarks {
+    max-width: 300px; /* I-adjust ang maximum na haba ng comment textbox */
+    min-height: 50px; /* Itakda ang minimum na taas ng comment textbox */
+    max-height: 150px; /* Itakda ang maximum na taas ng comment textbox */
+    overflow-y: auto; /* Magdagdag ng scrollbar kapag ang teksto ay sumobra sa taas ng comment textbox */
+    resize: vertical; /* Magdagdag ng pagganap na pababa sa resize */
+}
+
+/* CSS Styles */
+.table-cell {
+    text-align: center;
+}
+
+.dropdown-menu-item {
+    font-size: 14px; /* Adjust font size as needed */
+    /* Add any other styles for dropdown menu items */
+}
