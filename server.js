@@ -683,3 +683,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+function updateDataCount(count) {
+    document.getElementById("dataCount").textContent = "Data Count: " + count;
+  }
+  
+  function countData() {
+    getDocs(collection(db, "Request"))
+      .then((querySnapshot) => {
+        var count = querySnapshot.size; // Get the number of documents in the collection
+        updateDataCount(count); // Update the data count in the HTML
+      })
+      .catch((error) => {
+        console.error("Error counting documents: ", error);
+      });
+  }
+  
+  // Call the countData function to count the documents
+  countData();
+  
