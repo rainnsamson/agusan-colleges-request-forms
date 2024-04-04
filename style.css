@@ -190,3 +190,17 @@ text-align: center;
     font-size: 14px; /* Adjust font size as needed */
     /* Add any other styles for dropdown menu items */
 }
+
+.edit-btn {
+    background-color: blue;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+.edit-btn:hover {
+    background-color: darkblue;
+    cursor: pointer;
+}
+

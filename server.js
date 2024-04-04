@@ -8,6 +8,8 @@ import {
   doc,
   addDoc,
   getDoc,
+  orderBy,
+  query
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
 // Your web app's Firebase configuration
@@ -117,22 +119,31 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-document.getElementById("statusFilter").addEventListener("change", function () {
-  var status = this.value; // Get the selected status
-  filterTable(status); // Filter the table based on the selected status
+document.addEventListener("DOMContentLoaded", function () {
+  var statusFilter = document.getElementById("statusFilter");
+  if (statusFilter) {
+    statusFilter.addEventListener("change", function () {
+      var status = this.value; // Get the selected status
+      filterTable(status); // Filter the table based on the selected status
+    });
+  }
 });
 
 function filterTable(status) {
   var rows = document.querySelectorAll("#documentRequestsTable tbody tr");
   rows.forEach(function (row) {
-    var rowStatus = row.querySelector("td:nth-child(14) select").value; // Get the status of the row
-    if (status === "all" || rowStatus === status) {
-      row.style.display = ""; // Show the row if status is "all" or matches the selected status
-    } else {
-      row.style.display = "none"; // Hide the row if it doesn't match the selected status
+    var rowStatusElement = row.querySelector("td:nth-child(14) select");
+    if (rowStatusElement) {
+      var rowStatus = rowStatusElement.value; // Get the status of the row
+      if (status === "all" || rowStatus === status) {
+        row.style.display = ""; // Show the row if status is "all" or matches the selected status
+      } else {
+        row.style.display = "none"; // Hide the row if it doesn't match the selected status
+      }
     }
   });
 }
+
 
 document.addEventListener("click", function (event) {
   if (event.target.classList.contains("send-email-btn")) {
@@ -535,19 +546,21 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Declare the fetchRecords function here
-  function fetchRecords() {
-    getDocs(collection(db, "Request"))
-      .then((querySnapshot) => {
-        var records = [];
-        querySnapshot.forEach((doc) => {
-          records.push({ id: doc.id, ...doc.data() });
-        });
-        displayRecords(records); // Display records in the table
-      })
-      .catch((error) => {
-        console.error("Error fetching documents: ", error);
+function fetchRecords() {
+  const q = query(collection(db, "Request"), orderBy("dateRequested", "desc"));
+  getDocs(q)
+    .then((querySnapshot) => {
+      var records = [];
+      querySnapshot.forEach((doc) => {
+        records.push({ id: doc.id, ...doc.data() });
       });
-  }
+      displayRecords(records); // Display records in the table
+    })
+    .catch((error) => {
+      console.error("Error fetching documents: ", error);
+    });
+}
+
 
   // Call the fetchRecords function after its declaration
   fetchRecords();
@@ -653,52 +666,58 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Event listener for sending email button when the status is 'Release'
-  document.addEventListener("click", function (event) {
-    if (event.target.classList.contains("send-email-btn")) {
-      var docId = event.target.getAttribute("data-doc-id");
-      // Get the status of the document
-      var docRef = doc(db, "Request", docId);
-      getDoc(docRef)
-        .then((doc) => {
-          if (doc.exists()) {
-            var status = doc.data().status;
-            if (status === "Release") {
-              // Add code to send email here
-              console.log("Sending email for document with ID:", docId);
-            } else {
-              console.log(
-                "Cannot send email for document with ID:",
-                docId,
-                "because status is not 'Release'."
-              );
-            }
+ // Event listener for sending email button when the status is 'Release'
+document.addEventListener("click", function (event) {
+  if (event.target.classList.contains("send-email-btn")) {
+    var sendButton = event.target; // Store reference to the button
+
+    var docId = sendButton.getAttribute("data-doc-id");
+    // Get the status of the document
+    var docRef = doc(db, "Request", docId);
+    getDoc(docRef)
+      .then((doc) => {
+        if (doc.exists()) {
+          var status = doc.data().status;
+          if (status === "Release") {
+            // Add code to send email here
+            console.log("Sending email for document with ID:", docId);
+            // Update button text and disable it
+            sendButton.textContent = "Email Sent";
+            sendButton.disabled = true;
           } else {
-            console.log("Document not found with ID:", docId);
+            console.log(
+              "Cannot send email for document with ID:",
+              docId,
+              "because status is not 'Release'."
+            );
           }
-        })
-        .catch((error) => {
-          console.error("Error getting document:", error);
-        });
-    }
-  });
+        } else {
+          console.log("Document not found with ID:", docId);
+        }
+      })
+      .catch((error) => {
+        console.error("Error getting document:", error);
+      });
+  }
+});
+
 });
 
 function updateDataCount(count) {
-    document.getElementById("dataCount").textContent = "Data Count: " + count;
-  }
-  
-  function countData() {
-    getDocs(collection(db, "Request"))
-      .then((querySnapshot) => {
-        var count = querySnapshot.size; // Get the number of documents in the collection
-        updateDataCount(count); // Update the data count in the HTML
-      })
-      .catch((error) => {
-        console.error("Error counting documents: ", error);
-      });
-  }
-  
-  // Call the countData function to count the documents
-  countData();
-  
+  document.getElementById("dataCount").textContent = "Data Count: " + count;
+}
+
+function countData() {
+  getDocs(collection(db, "Request"))
+    .then((querySnapshot) => {
+      var count = querySnapshot.size; // Get the number of documents in the collection
+      updateDataCount(count); // Update the data count in the HTML
+    })
+    .catch((error) => {
+      console.error("Error counting documents: ", error);
+    });
+}
+
+// Call the countData function to count the documents
+countData();
+
