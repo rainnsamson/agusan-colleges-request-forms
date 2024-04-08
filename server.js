@@ -474,10 +474,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }" data-status="Processing">Processing</button></li>
             <li><button class="dropdown-item status-update dropdown-menu-item" data-doc-id="${
               record.id
-            }" data-status="Signature">Signature</button></li>
-            <li><button class="dropdown-item status-update dropdown-menu-item" data-doc-id="${
-              record.id
-            }" data-status="Release">Release</button></li>
+            }" data-status="Release">For Release</button></li>
             <li><button class="dropdown-item status-update dropdown-menu-item" data-doc-id="${
               record.id
             }" data-status="Received">Received</button></li>
