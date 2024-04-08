@@ -419,7 +419,7 @@ document.addEventListener("click", function (event) {
 document.addEventListener("DOMContentLoaded", function () {
   // Define variables for pagination and filtering
   var currentPage = 1;
-  var recordsPerPage = 10; // Number of records to display per page
+  var recordsPerPage = 25; // Number of records to display per page
   var currentStatusFilter = "all"; // Default status filter
 
   // Function to display records based on pagination and status filter
