@@ -75,15 +75,12 @@ body {
     border-spacing: 0; /* Alisin ang default na spacing ng mga cells */
 }
 
+/* New style for centering text and removing custom colors */
 .table th,
 .table td {
-    padding: 8px;
-    text-align: center;
-    border: 1px solid #ddd;
-    padding: 10px; /* Space sa loob ng bawat cell */
-    border: 1px solid #ddd; /* Border para sa bawat cell */
+    text-align: center; /* Center align text */
+    color: inherit; /* Use default text color */
 }
-
 
 
 /* Repeat para sa iba pang columns */
@@ -112,7 +109,7 @@ header {
     text-align: center;
     padding: 20px;
     background-color: #ababab;
-    color: white;
+    color: rgb(0, 0, 0);
 }
 
 form {
@@ -204,3 +201,12 @@ text-align: center;
     cursor: pointer;
 }
 
+
+
+/* NEW STYLE START HERE */
+
+.pending-color { color: rgb(0, 0, 0); background-color: blue; }
+.processing-color { color: rgb(0, 0, 0); background-color: orange; }
+.for-release-color { color: rgb(0, 0, 0); background-color: green; }
+.received-color { color: rgb(0, 0, 0); background-color: gray; }
+  

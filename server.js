@@ -1,720 +1,665 @@
-// Import the functions you need from the SDKs you need
+// Import necessary functions from Firebase SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-  addDoc,
-  getDoc,
-  orderBy,
-  query
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where, doc, updateDoc, getDoc, addDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-// Your web app's Firebase configuration
+// Your Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "db-aci-request-forms.firebaseapp.com",
-  projectId: "db-aci-request-forms",
-  storageBucket: "db-aci-request-forms.appspot.com",
-  messagingSenderId: "78560005691",
-  appId: "1:78560005691:web:f2585b5914da48f1bcd61e",
+    apiKey: "YOUR_API_KEY",
+    authDomain: "db-aci-request-forms.firebaseapp.com",
+    projectId: "db-aci-request-forms",
+    storageBucket: "db-aci-request-forms.appspot.com",
+    messagingSenderId: "78560005691",
+    appId: "1:78560005691:web:f2585b5914da48f1bcd61e",
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-// Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 
-// LOGIN AND LOGOUT
-document.addEventListener("DOMContentLoaded", function () {
-  // Logout button
-  var logoutButton = document.getElementById("logout");
+// Flag for applying filter
+let applyFilter = false;
 
-  // Attach event listener
-  if (logoutButton) {
-    logoutButton.addEventListener("click", function (event) {
-      event.preventDefault(); // Prevent default redirect
+// Function to authenticate user
+async function authenticateUser(username, password) {
+    try {
+        const usersCollection = collection(db, "aci-registrar");
+        const q = query(usersCollection, where("username", "==", username), where("password", "==", password));
+        const querySnapshot = await getDocs(q);
 
-      // Perform necessary clean-up
-      window.location.href = "index.html"; // Redirect to login page
-    });
-  }
+        if (querySnapshot.size > 0) {
+            const user = querySnapshot.docs[0].data();
+            const role = user.role;
+            sessionStorage.setItem("role", role);
+            return "forms.html";
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error("Error authenticating user:", error);
+        return false;
+    }
+}
 
-  // Login form validation
-  var loginForm = document.getElementById("loginForm");
-  if (loginForm) {
-    loginForm.addEventListener("submit", function (event) {
-      event.preventDefault(); // Prevent default form submission
+// Event listener for login form submission
+document.addEventListener("DOMContentLoaded", async function () {
+    var loginForm = document.getElementById("loginForm");
 
-      // Get username and password
-      var username = document.getElementById("username").value;
-      var password = document.getElementById("password").value;
+    if (loginForm) {
+        loginForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
 
-      // Check credentials
-      if (username === "aciregistrar" && password === "admin") {
-        // Redirect to index.html
-        window.location.href = window.location.href = "forms.html";
-      } else {
-        alert("Invalid username or password. Please try again.");
-      }
-    });
-  }
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+
+            const redirectPage = await authenticateUser(username, password);
+
+            if (redirectPage) {
+                sessionStorage.setItem("username", username);
+                window.location.href = redirectPage;
+            } else {
+                alert("Invalid username or password. Please try again.");
+            }
+        });
+    }
 });
 
+// Event listener for logout button
 document.addEventListener("DOMContentLoaded", function () {
-  // Event listener for submit button
-  var submitButton = document.getElementById("submit");
-  if (submitButton) {
-    submitButton.addEventListener("click", function (e) {
-      e.preventDefault(); // Prevent the form from submitting normally
+    var usernameDisplay = document.getElementById("usernameDisplay");
+    var logoutButton = document.getElementById("logout");
 
-      // Retrieve all form fields
-      var idNumber = document.getElementById("idNumber").value;
-      var surname = document.getElementById("surname").value;
-      var firstName = document.getElementById("firstName").value;
-      var middleName = document.getElementById("middleName").value;
-      var contactNumber = document.getElementById("contactNumber").value;
-      var emailAddress = document.getElementById("emailAddress").value;
-      var documentRequestDropdown = document.getElementById("documentRequest");
-      var documentRequestValue =
-        documentRequestDropdown.options[documentRequestDropdown.selectedIndex]
-          .text; // Gets the selected text from the dropdown
-      var purpose = document.getElementById("purpose").value;
-      var controlNumber = document.getElementById("controlNumber").value;
-      var orNumber = document.getElementById("orNumber").value;
-      var dateRequested = document.getElementById("dateRequested").value;
-      var status = "Pending"; // Default status is 'Pending' for new requests
+    if (usernameDisplay) {
+        var username = sessionStorage.getItem("username");
+        usernameDisplay.innerText = " " + username;
+    }
 
-      // Add a new document in collection "Request"
-      addDoc(collection(db, "Request"), {
+    if (logoutButton) {
+        logoutButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            sessionStorage.removeItem("username");
+            window.location.href = "index.html";
+        });
+    }
+});
+
+// Event listener for changes in filters
+document.addEventListener("change", function(event) {
+    if (event.target.id === "dateFilter" || event.target.id === "statusFilter" || event.target.id === "dateFilterIssued") {
+        // Do not filter immediately when date or status is selected
+        return;
+    }
+    // Reset current page to 1 when applying filter
+    sessionStorage.setItem("currentPage", 1);
+    // Display requests on the current page when applying filter
+    displayRequests(1);
+});
+
+// Event listener for applying date issued and status filters
+document.getElementById("applyFilterBtn").addEventListener("click", function() {
+    // Reset current page to 1 when applying date issued and status filters
+    sessionStorage.setItem("currentPage", 1);
+    // Display requests on the current page when applying date issued and status filters
+    displayRequests(1);
+});
+
+// Display requests function with pagination
+async function displayRequests(pageNumber) {
+    const requestTableBody = document.getElementById("requestTableBody");
+    const paginationContainer = document.getElementById("paginationContainer");
+    const itemsPerPage = 25;
+    const startIndex = (pageNumber - 1) * itemsPerPage;
+    const endIndex = pageNumber * itemsPerPage;
+
+    try {
+        const dateFilter = document.getElementById("dateFilter").value;
+        const dateFilterIssued = document.getElementById("dateFilterIssued").value;
+        const statusFilter = document.getElementById("statusFilter").value;
+        const queryRef = collection(db, "Request");
+
+        // Add orderBy to sort by dateRequested in descending order
+        const sortedQueryRef = query(queryRef, orderBy("dateRequested", "desc"));
+        let filteredQueryRef = sortedQueryRef;
+
+        // Check if dateFilter is not empty
+        if (dateFilter) {
+            filteredQueryRef = query(sortedQueryRef, where("dateRequested", "==", dateFilter));
+        }
+
+        const querySnapshot = await getDocs(filteredQueryRef);
+
+        requestTableBody.innerHTML = "";
+        const userRole = sessionStorage.getItem("role");
+        const statusColors = {
+            "Pending": "pending-color",
+            "Processing": "processing-color",
+            "For Release": "for-release-color",
+            "Received": "received-color"
+        };
+        const userOptions = ['jbermoy', 'nclaro', 'rbasanal', 'fodlime'];
+
+        let itemCount = 0;
+
+        // Check if querySnapshot is not empty before iterating through documents
+        if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+                const requestData = doc.data();
+                if ((!dateFilterIssued || dateFilterIssued === requestData.dateIssued) &&
+                    (statusFilter === "all" || statusFilter === requestData.status)) {
+                    if (itemCount >= startIndex && itemCount < endIndex) {
+                        // Generate table rows
+                        const statusOptions = ['', 'Pending', 'Processing', 'For Release', 'Received'];
+                        const statusDropdownOptions = statusOptions.map(option => {
+                            const selected = option === requestData.status ? "selected" : "";
+                            const colorClass = statusColors[option];
+                            return `<option value="${option}" ${selected} class="${colorClass}">${option === '' ? 'Select Status' : option}</option>`;
+                        }).join("");
+
+                        const userDropdownOptions = userOptions.map(option => {
+                            const selected = option === requestData.user ? "selected" : "";
+                            return `<option value="${option}" ${selected}>${option}</option>`;
+                        }).join("");
+
+                        const defaultUserOption = `<option value="" ${requestData.user ? "" : "selected"} disabled>Select User</option>`;
+                        const remarksValue = requestData.remarks ? requestData.remarks : "";
+                        const dateIssuedValue = requestData.dateIssued ? requestData.dateIssued : "";
+                        const dropdownStyle = "class='form-select status-dropdown' style='min-width: 150px;'";
+
+                        const sendMailButton = requestData.status === "For Release" ?
+                            `<button class="btn btn-primary send-mail-btn" data-doc-id="${doc.id}">Send Mail</button>` :
+                            "";
+
+                        let actionColumn = "";
+                        if (userRole === "head") {
+                            actionColumn = `
+                                <td>
+                                    <button class="btn btn-secondary edit-btn" data-doc-id="${doc.id}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-danger delete-btn" data-doc-id="${doc.id}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            `;
+                        } else {
+                            actionColumn = `
+                                <td class="table-cell"><button class="btn btn-secondary edit-btn" data-doc-id="${doc.id}">Edit</button></td>
+                            `;
+                        }
+
+                        const tableRow = `
+                            <tr>
+                                <td class="table-cell">${itemCount + 1}</td>
+                                <td>${requestData.idNumber}</td>
+                                <td>${requestData.surname}</td>
+                                <td>${requestData.firstName}</td>
+                                <td>${requestData.middleName}</td>
+                                <td>${requestData.contactNumber}</td>
+                                <td>${requestData.emailAddress}</td>
+                                <td>${requestData.documentRequest}</td>
+                                <td>${requestData.purpose}</td>
+                                <td>${requestData.controlNumber}</td>
+                                <td>${requestData.orNumber}</td>
+                                <td>${requestData.dateRequested}</td>
+                                <td>
+                                    <input type="date" id="dateIssued_${doc.id}" name="dateIssued_${doc.id}" class="form-control date-issued" data-doc-id="${doc.id}" value="${dateIssuedValue}">
+                                </td>
+                                <td>
+                                    <select id="status_${doc.id}" class="form-select status-update ${statusColors[requestData.status]}" data-doc-id="${doc.id}" ${dropdownStyle}>
+                                        ${statusDropdownOptions}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select id="user_${doc.id}" class="form-select user-update ${requestData.user ? "" : "no-user"}" data-doc-id="${doc.id}" ${dropdownStyle}>
+                                        ${defaultUserOption}
+                                        ${userDropdownOptions}
+                                    </select>
+                                </td>
+                                <td>
+                                    <textarea id="remarks_${doc.id}" class="form-control remarks-update" data-doc-id="${doc.id}" style="width: 300px; min-width: 100%; min-height: 20px;">${remarksValue}</textarea>
+                                </td>
+                                <td>${sendMailButton}${requestData.emailSent}</td>
+                                ${actionColumn}
+                            </tr>
+                        `;
+
+                        requestTableBody.innerHTML += tableRow;
+                    }
+                    itemCount++;
+                }
+            });
+        } else {
+            console.log("No documents found.");
+        }
+
+        updateDataCountDisplay(itemCount);
+        updatePagination(itemCount);
+        sessionStorage.setItem("currentPage", pageNumber);
+    } catch (error) {
+        console.error("Error fetching documents:", error);
+    }
+}
+
+
+// Function to update data count display
+function updateDataCountDisplay(count) {
+    const dataCountElement = document.getElementById("dataCount");
+    dataCountElement.textContent = `Total number of data: ${count}`;
+}
+
+// Function to update pagination buttons
+function updatePagination(itemCount) {
+    const paginationContainer = document.getElementById("paginationContainer");
+    const totalPages = Math.ceil(itemCount / 25);
+
+    paginationContainer.innerHTML = ""; // Clear previous pagination buttons
+
+    for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement("button");
+        button.textContent = i;
+        button.classList.add("btn", "btn-sm", "btn-outline-primary", "mx-1");
+        button.addEventListener("click", function () {
+            displayRequests(i);
+        });
+        paginationContainer.appendChild(button);
+    }
+}
+
+// Event listener to update status when dropdown value changes
+document.addEventListener("change", async function (event) {
+    if (event.target.classList.contains("status-update") || event.target.classList.contains("user-update") || event.target.classList.contains("remarks-update") || event.target.classList.contains("date-issued")) {
+        const docId = event.target.getAttribute("data-doc-id");
+        let updateData = {};
+
+        if (event.target.classList.contains("status-update")) {
+            const newStatus = event.target.value;
+            updateData = { status: newStatus };
+        }
+
+        if (event.target.classList.contains("user-update")) {
+            const newUser = event.target.value;
+            updateData = { user: newUser };
+        }
+
+        if (event.target.classList.contains("remarks-update")) {
+            const newRemarks = event.target.value;
+            updateData = { remarks: newRemarks };
+        }
+
+        if (event.target.classList.contains("date-issued")) {
+            const newDateIssued = event.target.value;
+            updateData = { dateIssued: newDateIssued };
+        }
+
+        try {
+            await updateDoc(doc(db, "Request", docId), updateData);
+            console.log("Document updated successfully!");
+
+            // Reload the table after status update
+            displayRequests(1); // Display first page after update
+
+        } catch (error) {
+            console.error("Error updating document: ", error);
+        }
+    }
+});
+
+// Call the function to display requests when the DOM content is loaded
+document.addEventListener("DOMContentLoaded", function () {
+    // Get the current page from session storage
+    const currentPage = sessionStorage.getItem("currentPage");
+    displayRequests(currentPage ? parseInt(currentPage) : 1); // Display the stored page or default to page 1
+});
+
+
+// Define the sendMail function
+async function sendMail(to_email) {
+    try {
+        // Here you can implement the functionality to send an email using the retrieved emailAddress
+        console.log("Sending email to:", to_email);
+        // Implement email sending functionality here
+    } catch (error) {
+        console.error("Error sending email:", error);
+    }
+}
+
+//SEND EMAIL FUNCTION *********************************************************************************
+
+// Event listener for clicks on "Send Mail" buttons
+document.addEventListener("click", async function(event) {
+    if (event.target.classList.contains("send-mail-btn")) {
+        const docId = event.target.getAttribute("data-doc-id");
+        // Retrieve the document from the database to get the email address
+        const docRef = doc(db, "Request", docId);
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const requestData = docSnap.data();
+                const to_email = requestData.emailAddress;
+                // Set the value of the to_email input field in the modal
+                document.getElementById("to_email").value = to_email;
+                // Set the value of the from_email input field in the modal to the registrar's email
+                document.getElementById("sender").value = "registrar_office@aci.edu.ph";
+                // Clear the value of the subject input field
+                document.getElementById("subject").value = "";
+                // Display the modal
+                const sendEmailModal = new bootstrap.Modal(document.getElementById('sendEmailModal'));
+                sendEmailModal.show();
+
+                // Event listener for "Send Email" button in the modal
+                document.getElementById("sendEmail").addEventListener("click", async function() {
+                    const subject = document.getElementById("subject").value;
+
+                    // Send email using EmailJS
+                    try {
+                        await emailjs.send("service_lk0vafp", "template_nn5qpym", {
+                            to_email: to_email,
+                            from_email: "registrar_office@aci.edu.ph",
+                            subject: subject
+                        });
+
+                        // Update the document in the database to indicate that the email has been sent
+                        await updateDoc(docRef, { 
+                            emailSent: "Email Sent", // Update emailSent field to "Email Sent"
+                            status: "Received" // Update status to "Received"
+                        });
+
+                        // Hide the modal
+                        sendEmailModal.hide();
+                        // Reload the table to reflect the changes
+                        displayRequests(1); // Display first page after update
+                    } catch (error) {
+                        console.error("Error sending email:", error);
+                        // Add your code here to handle errors, like displaying an error message
+                    }
+                });
+            } else {
+                console.error("No such document exists!");
+            }
+        } catch (error) {
+            console.error("Error retrieving document:", error);
+        }
+    }
+});
+
+
+//ADD, EDIT & DELETE FUNCTION ***************************************************************************************************
+
+
+// Click Edit button888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
+
+// Create modal instance outside of the functions
+const editModal = new bootstrap.Modal(document.getElementById("createRequestModal"));
+
+// Function to open the create modal and set it up for creating a new document
+function openCreateModal() {
+    const modalTitle = document.getElementById("modalTitle");
+    const submitButton = document.getElementById("submitRequest");
+    const saveButton = document.getElementById("saveEdit");
+
+    // Setting up the modal for creating new document
+    modalTitle.innerText = "Create Document Request";
+    submitButton.style.display = "none";
+    saveButton.style.display = "block";
+
+    // Clear modal fields
+    document.getElementById("idNumber").value = "";
+    document.getElementById("surname").value = "";
+    document.getElementById("firstName").value = "";
+    document.getElementById("middleName").value = "";
+    document.getElementById("contactNumber").value = "";
+    document.getElementById("emailAddress").value = "";
+    document.getElementById("documentRequest").value = "";
+    document.getElementById("purpose").value = "";
+    document.getElementById("controlNumber").value = "";
+    document.getElementById("orNumber").value = "";
+    document.getElementById("dateRequested").value = "";
+
+    // Open the modal
+    editModal.show();
+}
+
+// Function to open the edit modal and populate it with data for editing existing document
+async function openEditModal(docId) {
+    const modalTitle = document.getElementById("modalTitle");
+    const submitButton = document.getElementById("submitRequest");
+    const saveButton = document.getElementById("saveEdit");
+
+    // Setting up the modal for editing existing document
+    modalTitle.innerText = "Edit Document Request";
+    submitButton.style.display = "block";
+    saveButton.style.display = "none";
+
+    // Retrieve data from Firestore based on the document ID
+    try {
+        const docRef = doc(db, "Request", docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const requestData = docSnap.data();
+            // Populate modal fields with retrieved data
+            document.getElementById("idNumber").value = requestData.idNumber;
+            document.getElementById("surname").value = requestData.surname;
+            document.getElementById("firstName").value = requestData.firstName;
+            document.getElementById("middleName").value = requestData.middleName;
+            document.getElementById("contactNumber").value = requestData.contactNumber;
+            document.getElementById("emailAddress").value = requestData.emailAddress;
+            document.getElementById("documentRequest").value = requestData.documentRequest;
+            document.getElementById("purpose").value = requestData.purpose;
+            document.getElementById("controlNumber").value = requestData.controlNumber;
+            document.getElementById("orNumber").value = requestData.orNumber;
+            document.getElementById("dateRequested").value = requestData.dateRequested;
+
+            // Set the data-doc-id attribute on the form element
+            const form = document.getElementById("documentRequestForm");
+            form.setAttribute("data-doc-id", docId);
+        } else {
+            console.log("Document does not exist!");
+        }
+    } catch (error) {
+        console.error("Error getting document:", error);
+    }
+
+    // Open the modal
+    editModal.show();
+}
+
+// Function to update the document in Firestore
+async function updateDocument() {
+    // Retrieve the form element
+    const form = document.getElementById("documentRequestForm");
+
+    // Get the document ID stored as an attribute of the form
+    const docId = form.getAttribute("data-doc-id");
+
+    // Retrieve values from modal fields
+    const idNumber = document.getElementById("idNumber").value;
+    const surname = document.getElementById("surname").value;
+    const firstName = document.getElementById("firstName").value;
+    const middleName = document.getElementById("middleName").value;
+    const contactNumber = document.getElementById("contactNumber").value;
+    const emailAddress = document.getElementById("emailAddress").value;
+    const documentRequest = document.getElementById("documentRequest").value;
+    const purpose = document.getElementById("purpose").value;
+    const controlNumber = document.getElementById("controlNumber").value;
+    const orNumber = document.getElementById("orNumber").value;
+    const dateRequested = document.getElementById("dateRequested").value;
+
+    // Retrieve the updated status value
+    const statusId = `status_${docId}`;
+    const updatedStatus = document.getElementById(statusId).value;
+
+    // Retrieve the updated user value
+    const userId = `user_${docId}`;
+    const updatedUser = document.getElementById(userId).value;
+
+    // Retrieve the updated remarks value
+    const remarksId = `remarks_${docId}`;
+    const updatedRemarks = document.getElementById(remarksId).value;
+
+    // Construct an object with updated data
+    const newData = {
         idNumber: idNumber,
         surname: surname,
         firstName: firstName,
         middleName: middleName,
         contactNumber: contactNumber,
         emailAddress: emailAddress,
-        documentRequest: documentRequestValue, // Save the selected text from the dropdown
+        documentRequest: documentRequest,
         purpose: purpose,
         controlNumber: controlNumber,
         orNumber: orNumber,
         dateRequested: dateRequested,
-        dateIssued: "", // Set initial value to empty string
-        status: status, // Save status value
-        user: "", // Save user as blank
-        remarks: "", // Save remarks as blank
-      })
-        .then(() => {
-          alert("Request added");
-          // Clear the form after successful submission
-          document.getElementById("documentRequestForm").reset();
-          // Reload the page to display the new data
-          location.reload();
-        })
-        .catch((error) => {
-          console.error("Error adding document: ", error);
-        });
-    });
-  }
-});
+        status: updatedStatus,
+        user: updatedUser,
+        remarks: updatedRemarks
+    };
 
-document.addEventListener("DOMContentLoaded", function () {
-  var statusFilter = document.getElementById("statusFilter");
-  if (statusFilter) {
-    statusFilter.addEventListener("change", function () {
-      var status = this.value; // Get the selected status
-      filterTable(status); // Filter the table based on the selected status
-    });
-  }
-});
-
-function filterTable(status) {
-  var rows = document.querySelectorAll("#documentRequestsTable tbody tr");
-  rows.forEach(function (row) {
-    var rowStatusElement = row.querySelector("td:nth-child(14) select");
-    if (rowStatusElement) {
-      var rowStatus = rowStatusElement.value; // Get the status of the row
-      if (status === "all" || rowStatus === status) {
-        row.style.display = ""; // Show the row if status is "all" or matches the selected status
-      } else {
-        row.style.display = "none"; // Hide the row if it doesn't match the selected status
-      }
+    // Update the document in Firestore
+    try {
+        await updateDoc(doc(db, "Request", docId), newData);
+        console.log("Document successfully updated!");
+        // Reload the table after update
+        displayRequests(1);
+        // Close the modal
+        editModal.hide();
+    } catch (error) {
+        console.error("Error updating document:", error);
     }
-  });
+}
+
+// Event listener for submit button in create/edit modal
+document.getElementById("documentRequestForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const docId = event.target.getAttribute("data-doc-id");
+
+    if (docId) {
+        // If docId exists, it means we are editing an existing document
+        updateDocument();
+    } else {
+        // If docId does not exist, it means we are creating a new document
+        submitDocument();
+    }
+});
+
+// Function to submit the document to Firestore
+async function submitDocument() {
+    // Retrieve values from modal fields
+    const idNumber = document.getElementById("idNumber").value;
+    const surname = document.getElementById("surname").value;
+    const firstName = document.getElementById("firstName").value;
+    const middleName = document.getElementById("middleName").value;
+    const contactNumber = document.getElementById("contactNumber").value;
+    const emailAddress = document.getElementById("emailAddress").value;
+    const documentRequest = document.getElementById("documentRequest").value;
+    const purpose = document.getElementById("purpose").value;
+    const controlNumber = document.getElementById("controlNumber").value;
+    const orNumber = document.getElementById("orNumber").value;
+    const dateRequested = document.getElementById("dateRequested").value;
+
+    // Construct an object with form data
+    const formData = {
+        idNumber: idNumber,
+        surname: surname,
+        firstName: firstName,
+        middleName: middleName,
+        contactNumber: contactNumber,
+        emailAddress: emailAddress,
+        documentRequest: documentRequest,
+        purpose: purpose,
+        controlNumber: controlNumber,
+        orNumber: orNumber,
+        dateRequested: dateRequested,
+        status: "Pending",
+        user: "",
+        remarks: ""
+    };
+
+    // Add the document to the "Request" collection in Firestore
+    try {
+        await addDoc(collection(db, "Request"), formData);
+        console.log("Document successfully submitted!");
+        // Reload the table after submission
+        displayRequests(1); // Display first page after update
+        // Close the modal
+        editModal.hide();
+    } catch (error) {
+        console.error("Error submitting document:", error);
+    }
 }
 
 
-document.addEventListener("click", function (event) {
-  if (event.target.classList.contains("send-email-btn")) {
-    var docId = event.target.getAttribute("data-doc-id");
-    var docRef = doc(db, "Request", docId);
-    getDoc(docRef)
-      .then((doc) => {
-        if (doc.exists()) {
-          var data = doc.data();
-          // Populate modal form fields
-          document.getElementById("to_email").value = data.to_email;
-
-          // Show the modal
-          var modal = new bootstrap.Modal(
-            document.getElementById("sendEmailModal")
-          );
-          modal.show();
-        } else {
-          console.log("No such document!");
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting document:", error);
-      });
-  }
+// Initialize the Bootstrap tooltip
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
 });
 
-// Close modal when 'Close' button or 'x' is clicked
-document
-  .querySelector("#sendEmailModal .btn-close")
-  .addEventListener("click", function () {
-    $("#sendEmailModal").modal("hide");
-  });
 
-// Close modal when 'x' is clicked
-document
-  .querySelector("#sendEmailModal .modal-header button")
-  .addEventListener("click", function () {
-    $("#sendEmailModal").modal("hide");
-  });
-
-  document.addEventListener("DOMContentLoaded", function () {
-    // Get the modal element
-    const createRequestModal = document.getElementById("createRequestModal");
-    // Get the link element for creating a request
-    const createRequestLink = document.getElementById("createRequestLink");
-    // Get the save button element
-    const saveEdit = document.getElementById("saveEdit");
-    // Get the submit button element
-    const submitButton = document.getElementById("submit");
-  
-    // Add click event listener to the link for creating a request
-    createRequestLink.addEventListener("click", function (event) {
-      event.preventDefault(); // Prevent default link behavior
-      // Show the modal
-      var modal = new bootstrap.Modal(createRequestModal);
-      modal.show();
-  
-      // Hide the save button and show the submit button when creating a request
-      if (saveEdit && submitButton) {
-        saveEdit.style.display = "none"; // or visibility: hidden;
-        submitButton.style.display = "inline-block"; // or visibility: visible;
-      } else {
-        console.log("Save or submit button not found!");
-      }
-  
-      // Clear the form fields
-      document.getElementById("idNumber").value = "";
-      document.getElementById("surname").value = "";
-      document.getElementById("firstName").value = "";
-      document.getElementById("middleName").value = "";
-      document.getElementById("contactNumber").value = "";
-      document.getElementById("emailAddress").value = "";
-      document.getElementById("documentRequest").value = "";
-      document.getElementById("purpose").value = "";
-      document.getElementById("controlNumber").value = "";
-      document.getElementById("orNumber").value = "";
-      document.getElementById("dateRequested").value = "";
-    });
-  
-    // Event listener for edit button click
-    document.addEventListener("click", function (event) {
-      if (event.target.classList.contains("edit-btn")) {
-        // Show the save button and hide the submit button when editing
-        if (saveEdit && submitButton) {
-          saveEdit.style.display = "inline-block"; // or visibility: visible;
-          submitButton.style.display = "none"; // or visibility: hidden;
-        } else {
-          console.log("Save or submit button not found!");
-        }
-  
-        // Populate the form fields with the data to edit
-        var docId = event.target.getAttribute("data-doc-id");
-        var docRef = doc(db, "Request", docId);
-        getDoc(docRef)
-          .then((doc) => {
-            if (doc.exists()) {
-              var data = doc.data();
-              document.getElementById("idNumber").value = data.idNumber;
-              document.getElementById("surname").value = data.surname;
-              document.getElementById("firstName").value = data.firstName;
-              document.getElementById("middleName").value = data.middleName;
-              document.getElementById("contactNumber").value = data.contactNumber;
-              document.getElementById("emailAddress").value = data.emailAddress;
-              document.getElementById("documentRequest").value = data.documentRequest;
-              document.getElementById("purpose").value = data.purpose;
-              document.getElementById("controlNumber").value = data.controlNumber;
-              document.getElementById("orNumber").value = data.orNumber;
-              document.getElementById("dateRequested").value = data.dateRequested;
-            } else {
-              console.log("Document not found!");
-            }
-          })
-          .catch((error) => {
-            console.error("Error getting document:", error);
-          });
-      }
-    });
-  
-    // Event listener for closing the modal
-    document.querySelector("#createRequestModal .btn-close").addEventListener("click", function () {
-      // Hide the save button when closing the modal
-      if (saveEdit) {
-        saveEdit.style.display = "none"; // or visibility: hidden;
-      } else {
-        console.log("Save button not found!");
-      }
-    });
-  });
-  
-
-document.addEventListener("click", function (event) {
-  if (event.target.classList.contains("send-email-btn")) {
-    var docId = event.target.getAttribute("data-doc-id");
-    var docRef = doc(db, "Request", docId);
-    getDoc(docRef)
-      .then((doc) => {
-        if (doc.exists()) {
-          var data = doc.data();
-          // Populate modal form fields
-          document.getElementById("to_email").value = data.emailAddress || ""; // Use the email from the database, or an empty string if undefined
-          document.getElementById("sender").value =
-            "registrar_office@aci.edu.ph"; // Set default sender email
-          document.getElementById("subject").value = ""; // Set email subject
-
-          // Set up event listener for Send button inside modal
-          var sendButton = document.getElementById("sendEmail");
-          var emailSent = false;
-          sendButton.addEventListener("click", function sendEmailHandler() {
-            if (!emailSent) {
-              // Prepare email template
-              var templateParams = {
-                to_email: data.emailAddress,
-                subject: document.getElementById("subject").value,
-              };
-
-              // Send email using emailjs
-              emailjs
-                .send("service_lk0vafp", "template_nn5qpym", templateParams)
-                .then(
-                  function (response) {
-                    alert("Email sent successfully:", response);
-                    // Close the modal
-                    var modal = bootstrap.Modal.getInstance(
-                      document.getElementById("sendEmailModal")
-                    );
-                    modal.hide();
-                  },
-                  function (error) {
-                    alert("Email sending failed:", error);
-                  }
-                );
-
-              emailSent = true; // Update flag to indicate email has been sent
-            }
-            sendButton.removeEventListener("click", sendEmailHandler);
-          });
-        } else {
-          console.log("No such document!");
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting document:", error);
-      });
-  }
-});
-
-// UPDATE OR EDIT DATA
-document.addEventListener("click", function (event) {
-  if (event.target.classList.contains("edit-btn")) {
-    var docId = event.target.getAttribute("data-doc-id");
-    if (!docId) {
-      console.error("Document ID is missing!");
-      return;
-    }
-    var docRef = doc(db, "Request", docId);
-    getDoc(docRef)
-      .then((doc) => {
-        if (doc.exists()) {
-          var data = doc.data();
-          console.log("Retrieved data:", data);
-          // Populate modal form fields with data from Firestore document
-          document.getElementById("idNumber").value = data.idNumber;
-          document.getElementById("surname").value = data.surname;
-          document.getElementById("firstName").value = data.firstName;
-          document.getElementById("middleName").value = data.middleName;
-          document.getElementById("contactNumber").value = data.contactNumber;
-          document.getElementById("emailAddress").value = data.emailAddress;
-          document.getElementById("documentRequest").value =
-            data.documentRequest;
-          document.getElementById("purpose").value = data.purpose;
-          document.getElementById("controlNumber").value = data.controlNumber;
-          document.getElementById("orNumber").value = data.orNumber;
-          document.getElementById("dateRequested").value = data.dateRequested;
-
-          // Show the modal if it exists
-          var modalElement = document.getElementById("createRequestModal");
-          if (modalElement) {
-            var modal = new bootstrap.Modal(modalElement);
-            modal.show();
-
-            // Hide the submit button
-            var submit = document.getElementById("submit");
-            if (submit) {
-              submit.style.display = "none"; // or visibility: hidden;
-            } else {
-              console.log("Submit button not found!");
-            }
-
-            // Save button inside the modal
-            var saveEdit = document.getElementById("saveEdit");
-            saveEdit.addEventListener("click", function () {
-              // Update document with new data
-              updateDoc(docRef, {
-                idNumber: document.getElementById("idNumber").value,
-                surname: document.getElementById("surname").value,
-                firstName: document.getElementById("firstName").value,
-                middleName: document.getElementById("middleName").value,
-                contactNumber: document.getElementById("contactNumber").value,
-                emailAddress: document.getElementById("emailAddress").value,
-                documentRequest:
-                  document.getElementById("documentRequest").value,
-                purpose: document.getElementById("purpose").value,
-                controlNumber: document.getElementById("controlNumber").value,
-                orNumber: document.getElementById("orNumber").value,
-                dateRequested: document.getElementById("dateRequested").value,
-                // Update other fields here...
-              })
-                .then(() => {
-                  console.log("Document successfully updated!");
-                  // Close the modal after saving
-                  modal.hide();
-                  // Reload the page
-                  location.reload();
-                })
-                .catch((error) => {
-                  console.error("Error updating document:", error);
-                });
-            });
-          } else {
-            console.log("Modal element not found!");
-          }
-        } else {
-          console.log("No such document!");
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting document:", error);
-      });
-  }
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  // Define variables for pagination and filtering
-  var currentPage = 1;
-  var recordsPerPage = 25; // Number of records to display per page
-  var currentStatusFilter = "all"; // Default status filter
-
-  // Function to display records based on pagination and status filter
-  function displayRecords(records) {
-    // Filter records based on the current status filter
-    var filteredRecords = records.filter(function (record) {
-      return (
-        currentStatusFilter === "all" || record.status === currentStatusFilter
-      );
-    });
-
-    // Calculate pagination variables
-    var startIndex = (currentPage - 1) * recordsPerPage;
-    var endIndex = startIndex + recordsPerPage;
-    var paginatedRecords = filteredRecords.slice(startIndex, endIndex);
-
-    // Render the paginated and filtered records into the table
-    var tableBody = document.getElementById("documentRequestsBody");
-    tableBody.innerHTML = ""; // Clear existing table rows
-    paginatedRecords.forEach(function (record, index) {
-      var newRow = tableBody.insertRow();
-      // Inside the displayRecords function where table rows are constructed
-      newRow.innerHTML = `
-<td class="table-cell">${startIndex + index + 1}</td>
-<td class="table-cell">${record.idNumber}</td>
-<td class="table-cell">${record.surname}</td>
-<td class="table-cell">${record.firstName}</td>
-<td class="table-cell">${record.middleName}</td>
-<td class="table-cell">${record.contactNumber}</td>
-<td class="table-cell">${record.emailAddress}</td>
-<td class="table-cell">${record.documentRequest}</td>
-<td class="table-cell">${record.purpose}</td>
-<td class="table-cell">${record.controlNumber}</td>
-<td class="table-cell">${record.orNumber}</td>
-<td class="table-cell">${record.dateRequested}</td>
-<td>
-    <input type="date" class="form-control date-released-input table-cell" value="${
-      record.dateReleased ? record.dateReleased : ""
-    }">
-</td>
-<td class="table-cell">
-    <div class="dropdown">
-        <button class="btn btn-secondary dropdown-toggle status-dropdown" type="button" id="statusDropdown${index}" data-bs-toggle="dropdown" aria-expanded="false">
-            ${record.status}
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="statusDropdown${index}">
-            <li><button class="dropdown-item status-update dropdown-menu-item" data-doc-id="${
-              record.id
-            }" data-status="Pending">Pending</button></li>
-            <li><button class="dropdown-item status-update dropdown-menu-item" data-doc-id="${
-              record.id
-            }" data-status="Processing">Processing</button></li>
-            <li><button class="dropdown-item status-update dropdown-menu-item" data-doc-id="${
-              record.id
-            }" data-status="Release">For Release</button></li>
-            <li><button class="dropdown-item status-update dropdown-menu-item" data-doc-id="${
-              record.id
-            }" data-status="Received">Received</button></li>
-        </ul>
-    </div>
-</td>
-<td class="table-cell">
-    <select class="form-select user-select table-cell">
-        <option value="" disabled selected>Select User</option>
-        <option value="jbermoy" ${
-          record.user === "jbermoy" ? "selected" : ""
-        }>jbermoy</option>
-        <option value="nclaro" ${
-          record.user === "nclaro" ? "selected" : ""
-        }>nclaro</option>
-        <option value="rbasanal" ${
-          record.user === "rbasanal" ? "selected" : ""
-        }>rbasanal</option>
-        <option value="fodlime" ${
-          record.user === "fodlime" ? "selected" : ""
-        }>fodlime</option>
-    </select>
-</td>
-<td contenteditable="true" class="remarks table-cell" style="max-width: 300px; min-height: 50px; max-height: 150px; overflow-y: auto; resize: vertical;">${
-        record.remarks
-      }</td>
-<td class="table-cell"><button class="btn btn-primary send-email-btn" data-doc-id="${
-        record.id
-      }" style="${
-        record.status !== "Release" ? "display: none;" : ""
-      }">Send Email</button></td>
-<td class="table-cell"><button class="btn btn-secondary edit-btn" data-doc-id="${
-        record.id
-      }">Edit</button></td>
-`;
-    });
-
-    // Display pagination controls
-    var totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
-    var paginationButtons = document.getElementById("paginationButtons");
-    paginationButtons.innerHTML = `
-            <ul class="pagination">
-                <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
-                    <button class="page-link" id="prevPage" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </button>
-                </li>
-        `;
-    for (let i = 1; i <= totalPages; i++) {
-      paginationButtons.innerHTML += `
-                <li class="page-item ${currentPage === i ? "active" : ""}">
-                    <button class="page-link page" data-page="${i}">${i}</button>
-                </li>
-            `;
-    }
-    paginationButtons.innerHTML += `
-                <li class="page-item ${
-                  currentPage === totalPages ? "disabled" : ""
-                }">
-                    <button class="page-link" id="nextPage" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </button>
-                </li>
-            </ul>
-        `;
-  }
-
-  // Declare the fetchRecords function here
-function fetchRecords() {
-  const q = query(collection(db, "Request"), orderBy("dateRequested", "desc"));
-  getDocs(q)
-    .then((querySnapshot) => {
-      var records = [];
-      querySnapshot.forEach((doc) => {
-        records.push({ id: doc.id, ...doc.data() });
-      });
-      displayRecords(records); // Display records in the table
-    })
-    .catch((error) => {
-      console.error("Error fetching documents: ", error);
-    });
+// Function to close the edit modal
+function closeEditModal() {
+    editModal.hide();
 }
 
-
-  // Call the fetchRecords function after its declaration
-  fetchRecords();
-
-  // Event listener for pagination buttons
-  document
-    .getElementById("paginationButtons")
-    .addEventListener("click", function (event) {
-      if (event.target.id === "prevPage" && currentPage > 1) {
-        currentPage--;
-        fetchRecords();
-      } else if (event.target.id === "nextPage") {
-        currentPage++;
-        fetchRecords();
-      } else if (event.target.classList.contains("page")) {
-        currentPage = parseInt(event.target.dataset.page);
-        fetchRecords();
-      }
-    });
-
-  document.addEventListener("click", function (event) {
-    if (event.target.classList.contains("status-update")) {
-      var docId = event.target.getAttribute("data-doc-id");
-      var newStatus = event.target.getAttribute("data-status");
-      // Update status in Firestore document
-
-      updateDoc(doc(db, "Request", docId), { status: newStatus })
-        .then(() => {
-          console.log("Document status updated successfully!");
-          fetchRecords(); // Refresh records after status update
-        })
-        .catch((error) => {
-          console.error("Error updating document status: ", error);
-        });
-    }
-  });
-
-  // Event listener for status filter dropdown
-  document
-    .getElementById("statusFilter")
-    .addEventListener("change", function () {
-      currentStatusFilter = this.value; // Update the current status filter
-      fetchRecords(); // Fetch and display records based on the new filter
-    });
-
-  // Event listener for updating remarks on keypress (Enter)
-  document.addEventListener("keypress", function (event) {
-    if (event.target.classList.contains("remarks") && event.key === "Enter") {
-      var docId = event.target.parentElement
-        .querySelector(".edit-btn")
-        .getAttribute("data-doc-id");
-      var newRemarks = event.target.textContent.trim();
-      // Update remarks in Firestore document
-      updateDoc(doc(db, "Request", docId), { remarks: newRemarks })
-        .then(() => {
-          console.log("Remarks updated successfully!");
-          fetchRecords(); // Refresh records after remarks update
-        })
-        .catch((error) => {
-          console.error("Error updating remarks: ", error);
-        });
-    }
-  });
-
-  // Event listener for updating date released
-  document.addEventListener("change", function (event) {
-    if (event.target.classList.contains("date-released-input")) {
-      var docId = event.target.parentElement.parentElement
-        .querySelector(".edit-btn")
-        .getAttribute("data-doc-id");
-      var newDateReleased = event.target.value;
-      // Update dateReleased in Firestore document
-      updateDoc(doc(db, "Request", docId), { dateReleased: newDateReleased })
-        .then(() => {
-          console.log("Date Released updated successfully!");
-          fetchRecords(); // Refresh records after date released update
-        })
-        .catch((error) => {
-          console.error("Error updating Date Released: ", error);
-        });
-    }
-  });
-
-  // Event listener for user selection dropdown
-  document.addEventListener("change", function (event) {
-    if (event.target.classList.contains("user-select")) {
-      var docId = event.target
-        .closest("tr")
-        .querySelector(".edit-btn")
-        .getAttribute("data-doc-id");
-      var newUser = event.target.value;
-
-      // Update user in Firestore document
-      updateDoc(doc(db, "Request", docId), { user: newUser })
-        .then(() => {
-          console.log("Document user updated successfully!");
-          // Optionally, you can refresh the records if needed
-          // fetchRecords();
-        })
-        .catch((error) => {
-          console.error("Error updating document user: ", error);
-        });
-    }
-  });
-
- // Event listener for sending email button when the status is 'Release'
-document.addEventListener("click", function (event) {
-  if (event.target.classList.contains("send-email-btn")) {
-    var sendButton = event.target; // Store reference to the button
-
-    var docId = sendButton.getAttribute("data-doc-id");
-    // Get the status of the document
-    var docRef = doc(db, "Request", docId);
-    getDoc(docRef)
-      .then((doc) => {
-        if (doc.exists()) {
-          var status = doc.data().status;
-          if (status === "Release") {
-            // Add code to send email here
-            console.log("Sending email for document with ID:", docId);
-            // Update button text and disable it
-            sendButton.textContent = "Email Sent";
-            sendButton.disabled = true;
-          } else {
-            console.log(
-              "Cannot send email for document with ID:",
-              docId,
-              "because status is not 'Release'."
-            );
-          }
+// Add an event listener for the edit buttons
+$(document).ready(function () {
+    $(document).on("click", ".edit-btn", function (event) {
+        const docId = $(this).attr("data-doc-id");
+        if (docId) {
+            openEditModal(docId);
         } else {
-          console.log("Document not found with ID:", docId);
+            console.error("Document ID is null.");
         }
-      })
-      .catch((error) => {
-        console.error("Error getting document:", error);
-      });
-  }
-});
-
-});
-
-function updateDataCount(count) {
-  document.getElementById("dataCount").textContent = "Data Count: " + count;
-}
-
-function countData() {
-  getDocs(collection(db, "Request"))
-    .then((querySnapshot) => {
-      var count = querySnapshot.size; // Get the number of documents in the collection
-      updateDataCount(count); // Update the data count in the HTML
-    })
-    .catch((error) => {
-      console.error("Error counting documents: ", error);
     });
+});
+
+// Add an event listener for the delete buttons
+$(document).ready(function () {
+    $(document).on("click", ".delete-btn", function (event) {
+        const docId = $(this).attr("data-doc-id");
+        if (docId && confirm("Are you sure you want to delete this document?")) {
+            deleteDocument(docId);
+        } else {
+            console.error("Document ID is null or user canceled delete operation.");
+        }
+    });
+});
+
+// Function to delete a document from Firestore
+async function deleteDocument(docId) {
+    try {
+        await deleteDoc(doc(db, "Request", docId));
+        console.log("Document successfully deleted!");
+        // Reload the table after deleting the document
+        displayRequests(1);
+    } catch (error) {
+        console.error("Error deleting document:", error);
+    }
 }
 
-// Call the countData function to count the documents
-countData();
+// Event listener to update document when submit button is clicked
+$(document).ready(function () {
+    $("#submitRequest").on("click", function (event) {
+        event.preventDefault();
+        updateDocument();
+    });
+});
 
+// Event listener to add document when save button is clicked
+$(document).ready(function () {
+    $("#saveEdit").on("click", function (event) {
+        event.preventDefault();
+        submitDocument(); // Call the function to submit the document to the database
+    });
+});
+
+// Add an event listener for the close button inside the modal
+$('#createRequestModal .btn-close').on('click', function () {
+    closeEditModal();
+});
+
+// Add an event listener for the create request link
+$(document).ready(function () {
+    $("#createRequestLink").on("click", function (event) {
+        openCreateModal(); // Call the function to open modal for creating new document
+    });
+});
