@@ -190,6 +190,18 @@ async function displayRequests(pageNumber) {
                             <tr>
                                 <td class="table-cell">${itemCount + 1}</td>
                                 <td>${requestData.idNumber}</td>
+                                <td>${requestData.dateRequested}</td>
+                                <td>
+                                    <select id="status_${doc.id}" class="form-select status-update ${statusColors[requestData.status]}" data-doc-id="${doc.id}" ${dropdownStyle}>
+                                        ${statusDropdownOptions}
+                                    </select>
+                                </td>
+                                <td>
+                                <select id="user_${doc.id}" class="form-select user-update ${requestData.user ? "" : "no-user"}" data-doc-id="${doc.id}" ${dropdownStyle}>
+                                    ${defaultUserOption}
+                                    ${userDropdownOptions}
+                                </select>
+                            </td>
                                 <td>${requestData.surname}</td>
                                 <td>${requestData.firstName}</td>
                                 <td>${requestData.middleName}</td>
@@ -199,20 +211,8 @@ async function displayRequests(pageNumber) {
                                 <td>${requestData.purpose}</td>
                                 <td>${requestData.controlNumber}</td>
                                 <td>${requestData.orNumber}</td>
-                                <td>${requestData.dateRequested}</td>
                                 <td>
                                     <input type="date" id="dateIssued_${doc.id}" name="dateIssued_${doc.id}" class="form-control date-issued" data-doc-id="${doc.id}" value="${dateIssuedValue}">
-                                </td>
-                                <td>
-                                    <select id="status_${doc.id}" class="form-select status-update ${statusColors[requestData.status]}" data-doc-id="${doc.id}" ${dropdownStyle}>
-                                        ${statusDropdownOptions}
-                                    </select>
-                                </td>
-                                <td>
-                                    <select id="user_${doc.id}" class="form-select user-update ${requestData.user ? "" : "no-user"}" data-doc-id="${doc.id}" ${dropdownStyle}>
-                                        ${defaultUserOption}
-                                        ${userDropdownOptions}
-                                    </select>
                                 </td>
                                 <td>
                                     <textarea id="remarks_${doc.id}" class="form-control remarks-update" data-doc-id="${doc.id}" style="width: 300px; min-width: 100%; min-height: 20px;">${remarksValue}</textarea>
