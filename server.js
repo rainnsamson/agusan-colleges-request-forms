@@ -85,21 +85,9 @@ document.addEventListener("DOMContentLoaded", function () {
 // Event listener for changes in filters
 document.addEventListener("change", function(event) {
     if (event.target.id === "dateFilter" || event.target.id === "statusFilter" || event.target.id === "dateFilterIssued") {
-        // Do not filter immediately when date or status is selected
-        return;
+        sessionStorage.setItem("currentPage", 1);
+        displayRequests(1);
     }
-    // Reset current page to 1 when applying filter
-    sessionStorage.setItem("currentPage", 1);
-    // Display requests on the current page when applying filter
-    displayRequests(1);
-});
-
-// Event listener for applying date issued and status filters
-document.getElementById("applyFilterBtn").addEventListener("click", function() {
-    // Reset current page to 1 when applying date issued and status filters
-    sessionStorage.setItem("currentPage", 1);
-    // Display requests on the current page when applying date issued and status filters
-    displayRequests(1);
 });
 
 // Display requests function with pagination
@@ -116,11 +104,9 @@ async function displayRequests(pageNumber) {
         const statusFilter = document.getElementById("statusFilter").value;
         const queryRef = collection(db, "Request");
 
-        // Add orderBy to sort by dateRequested in descending order
         const sortedQueryRef = query(queryRef, orderBy("dateRequested", "desc"));
         let filteredQueryRef = sortedQueryRef;
 
-        // Check if dateFilter is not empty
         if (dateFilter) {
             filteredQueryRef = query(sortedQueryRef, where("dateRequested", "==", dateFilter));
         }
@@ -139,7 +125,6 @@ async function displayRequests(pageNumber) {
 
         let itemCount = 0;
 
-        // Check if querySnapshot is not empty before iterating through documents
         if (!querySnapshot.empty) {
             querySnapshot.forEach((doc) => {
                 const requestData = doc.data();
@@ -197,11 +182,11 @@ async function displayRequests(pageNumber) {
                                     </select>
                                 </td>
                                 <td>
-                                <select id="user_${doc.id}" class="form-select user-update ${requestData.user ? "" : "no-user"}" data-doc-id="${doc.id}" ${dropdownStyle}>
-                                    ${defaultUserOption}
-                                    ${userDropdownOptions}
-                                </select>
-                            </td>
+                                    <select id="user_${doc.id}" class="form-select user-update ${requestData.user ? "" : "no-user"}" data-doc-id="${doc.id}" ${dropdownStyle}>
+                                        ${defaultUserOption}
+                                        ${userDropdownOptions}
+                                    </select>
+                                </td>
                                 <td>${requestData.surname}</td>
                                 <td>${requestData.firstName}</td>
                                 <td>${requestData.middleName}</td>
@@ -238,7 +223,6 @@ async function displayRequests(pageNumber) {
         console.error("Error fetching documents:", error);
     }
 }
-
 
 // Function to update data count display
 function updateDataCountDisplay(count) {
