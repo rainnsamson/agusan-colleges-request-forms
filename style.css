@@ -34,27 +34,26 @@ body {
     padding: 10px;
     border-radius: 5px;
     margin: 10px;
-    background-color: white; 
+    background-color: white;
 }
-
 
 .dateIssuedInput,
 .statusSelect {
-    font-size: 14px; 
+    font-size: 14px;
 }
 
 .statusSelect {
-    width: 350px; 
+    width: 350px;
 }
 
 #documentRequestsTable th,
 #documentRequestsTable td {
-    padding: 8px; 
-    text-align: left; 
+    padding: 8px;
+    text-align: left;
 }
 
 #documentRequestsTable th {
-    background-color: #fafafa; 
+    background-color: #fafafa;
 }
 
 .container {
@@ -62,48 +61,33 @@ body {
     margin-top: 20px;
 }
 
-
-  .table th, .table td {
-    font-size: 14px; /* Adjust the font size as needed */
+.table th,
+.table td {
+    font-size: 14px;
+    text-align: center;
+    color: inherit;
 }
 
 .table {
     width: 100%;
     border-collapse: collapse;
-    white-space: nowrap; /* Ito ay nagpapahintulot sa mga cell na hindi mag-wrap */
-    margin: 10px; /* Space sa labas ng table */
-    border-spacing: 0; /* Alisin ang default na spacing ng mga cells */
+    white-space: nowrap;
+    margin: 10px;
+    border-spacing: 0;
 }
 
-/* New style for centering text and removing custom colors */
-.table th,
-.table td {
-    text-align: center; /* Center align text */
-    color: inherit; /* Use default text color */
-}
-
-
-/* Repeat para sa iba pang columns */
-
-/* Ito ay magbibigay ng background color sa alternating rows */
 .table tbody tr:nth-child(even) {
     background-color: #f2f2f2;
 }
-/* I-adjust ang width ng 'Status' column */
+
 .table th:nth-child(14),
 .table td:nth-child(14) {
-    width: auto; /* I-adjust ang sukat depende sa pangangailangan */
+    width: auto;
 }
 
-/* I-adjust ang width ng input group */
 .input-group {
     width: 100%;
 }
-
-.input-group {
-    width: 150px; /* o anumang haba na gusto mo */
-}
-
 
 header {
     text-align: center;
@@ -152,40 +136,38 @@ form input[type="submit"]:hover {
 }
 
 h1 {
-text-align: center;
+    text-align: center;
 }
 
 .dropdown-toggle.status-dropdown {
-    width: 150px !important; /* Set the width of the dropdown toggle */
+    width: 150px !important;
 }
 
 .dropdown-menu.dropdown-menu-end {
-    min-width: 150px; /* Set the minimum width of the dropdown menu */
+    min-width: 150px;
 }
 
 .user-select {
-    width: 150px; /* Adjust width as needed */
+    width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .remarks {
-    max-width: 300px; /* I-adjust ang maximum na haba ng comment textbox */
-    min-height: 50px; /* Itakda ang minimum na taas ng comment textbox */
-    max-height: 150px; /* Itakda ang maximum na taas ng comment textbox */
-    overflow-y: auto; /* Magdagdag ng scrollbar kapag ang teksto ay sumobra sa taas ng comment textbox */
-    resize: vertical; /* Magdagdag ng pagganap na pababa sa resize */
+    max-width: 300px;
+    min-height: 50px;
+    max-height: 150px;
+    overflow-y: auto;
+    resize: vertical;
 }
 
-/* CSS Styles */
 .table-cell {
     text-align: center;
 }
 
 .dropdown-menu-item {
-    font-size: 14px; /* Adjust font size as needed */
-    /* Add any other styles for dropdown menu items */
+    font-size: 14px;
 }
 
 .edit-btn {
@@ -201,12 +183,22 @@ text-align: center;
     cursor: pointer;
 }
 
+.pending-color {
+    color: rgb(0, 0, 0);
+    background-color: blue;
+}
 
+.processing-color {
+    color: rgb(0, 0, 0);
+    background-color: orange;
+}
 
-/* NEW STYLE START HERE */
+.for-release-color {
+    color: rgb(0, 0, 0);
+    background-color: green;
+}
 
-.pending-color { color: rgb(0, 0, 0); background-color: blue; }
-.processing-color { color: rgb(0, 0, 0); background-color: orange; }
-.for-release-color { color: rgb(0, 0, 0); background-color: green; }
-.received-color { color: rgb(0, 0, 0); background-color: gray; }
-  
+.received-color {
+    color: rgb(0, 0, 0);
+    background-color: gray;
+}
