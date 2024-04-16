@@ -170,7 +170,9 @@ async function displayRequests(pageNumber) {
                             `;
                         } else {
                             actionColumn = `
-                                <td class="table-cell"><button class="btn btn-secondary edit-btn" data-doc-id="${doc.id}">Edit</button></td>
+                                <td class="table-cell"><button class="btn btn-secondary edit-btn" data-doc-id="${doc.id}">
+                                <i class="fas fa-edit"></i>
+                            </button></td>
                             `;
                         }
 
