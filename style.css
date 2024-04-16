@@ -185,20 +185,20 @@ h1 {
 
 .pending-color {
     color: rgb(0, 0, 0);
-    background-color: blue;
+    background-color: #C7C8CC;
 }
 
 .processing-color {
     color: rgb(0, 0, 0);
-    background-color: orange;
+    background-color: #FFC94A;
 }
 
 .for-release-color {
     color: rgb(0, 0, 0);
-    background-color: green;
+    background-color: #5BBCFF;
 }
 
 .received-color {
     color: rgb(0, 0, 0);
-    background-color: gray;
+    background-color: #87A922;
 }

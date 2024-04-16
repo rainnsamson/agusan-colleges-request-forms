@@ -149,9 +149,12 @@ async function displayRequests(pageNumber) {
                         const dateIssuedValue = requestData.dateIssued ? requestData.dateIssued : "";
                         const dropdownStyle = "class='form-select status-dropdown' style='min-width: 150px;'";
 
-                        const sendMailButton = requestData.status === "For Release" ?
-                            `<button class="btn btn-primary send-mail-btn" data-doc-id="${doc.id}">Send Mail</button>` :
-                            "";
+                        let sendMailButton = "";
+                        if (requestData.status === "For Release" && requestData.emailSent !== "Email Sent") {
+                            sendMailButton = `<button class="btn btn-primary send-mail-btn" data-doc-id="${doc.id}">Send Mail</button>`;
+                        } else {
+                            sendMailButton = requestData.emailSent;
+                        }
 
                         let actionColumn = "";
                         if (userRole === "head") {
@@ -202,7 +205,7 @@ async function displayRequests(pageNumber) {
                                 <td>
                                     <textarea id="remarks_${doc.id}" class="form-control remarks-update" data-doc-id="${doc.id}" style="width: 300px; min-width: 100%; min-height: 20px;">${remarksValue}</textarea>
                                 </td>
-                                <td>${sendMailButton}${requestData.emailSent}</td>
+                                <td>${sendMailButton}</td>
                                 ${actionColumn}
                             </tr>
                         `;
@@ -296,29 +299,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 // Define the sendMail function
-async function sendMail(to_email) {
+async function sendMail(docId) {
     try {
-        // Here you can implement the functionality to send an email using the retrieved emailAddress
-        console.log("Sending email to:", to_email);
-        // Implement email sending functionality here
-    } catch (error) {
-        console.error("Error sending email:", error);
-    }
-}
-
-//SEND EMAIL FUNCTION *********************************************************************************
-
-// Event listener for clicks on "Send Mail" buttons
-document.addEventListener("click", async function(event) {
-    if (event.target.classList.contains("send-mail-btn")) {
-        const docId = event.target.getAttribute("data-doc-id");
         // Retrieve the document from the database to get the email address
         const docRef = doc(db, "Request", docId);
-        try {
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const requestData = docSnap.data();
-                const to_email = requestData.emailAddress;
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const requestData = docSnap.data();
+            const to_email = requestData.emailAddress;
+
+            // Check if email has already been sent
+            if (requestData.emailSent !== "Email Sent") {
                 // Set the value of the to_email input field in the modal
                 document.getElementById("to_email").value = to_email;
                 // Set the value of the from_email input field in the modal to the registrar's email
@@ -344,7 +335,7 @@ document.addEventListener("click", async function(event) {
                         // Update the document in the database to indicate that the email has been sent
                         await updateDoc(docRef, { 
                             emailSent: "Email Sent", // Update emailSent field to "Email Sent"
-                            status: "Received" // Update status to "Received"
+                            status: "For Release" // Update status back to "For Release"
                         });
 
                         // Hide the modal
@@ -357,13 +348,30 @@ document.addEventListener("click", async function(event) {
                     }
                 });
             } else {
-                console.error("No such document exists!");
+                // If email has already been sent, display a message or handle it accordingly
+                console.log("Email has already been sent for this request.");
+                // Remove the "Send Mail" button
+                const sendMailButton = document.querySelector(`.send-mail-btn[data-doc-id="${docId}"]`);
+                if (sendMailButton) {
+                    sendMailButton.remove();
+                }
             }
-        } catch (error) {
-            console.error("Error retrieving document:", error);
+        } else {
+            console.error("No such document exists!");
         }
+    } catch (error) {
+        console.error("Error retrieving document:", error);
+    }
+}
+
+// Event listener for clicks on "Send Mail" buttons
+document.addEventListener("click", async function(event) {
+    if (event.target.classList.contains("send-mail-btn")) {
+        const docId = event.target.getAttribute("data-doc-id");
+        await sendMail(docId);
     }
 });
+
 
 
 //ADD, EDIT & DELETE FUNCTION ***************************************************************************************************
