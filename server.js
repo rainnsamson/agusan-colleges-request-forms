@@ -121,7 +121,7 @@ async function displayRequests(pageNumber) {
             "For Release": "for-release-color",
             "Received": "received-color"
         };
-        const userOptions = ['jbermoy', 'nclaro', 'rbasanal', 'fodlime'];
+        const userOptions = ['jbermoy', 'nclaro', 'rbasanal', 'fodlime', 'registrar'];
 
         let itemCount = 0;
 
@@ -657,3 +657,4 @@ $(document).ready(function () {
         openCreateModal(); // Call the function to open modal for creating new document
     });
 });
+
