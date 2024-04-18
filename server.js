@@ -16,9 +16,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Flag for applying filter
-let applyFilter = false;
-
 // Function to authenticate user
 async function authenticateUser(username, password) {
     try {
@@ -62,7 +59,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 });
-
 // Event listener for logout button
 document.addEventListener("DOMContentLoaded", function () {
     var usernameDisplay = document.getElementById("usernameDisplay");
@@ -229,6 +225,7 @@ async function displayRequests(pageNumber) {
     }
 }
 
+
 // Function to update data count display
 function updateDataCountDisplay(count) {
     const dataCountElement = document.getElementById("dataCount");
@@ -283,8 +280,11 @@ document.addEventListener("change", async function (event) {
             await updateDoc(doc(db, "Request", docId), updateData);
             console.log("Document updated successfully!");
 
+            // Store the current page number in session storage
+            const currentPage = sessionStorage.getItem("currentPage");
+
             // Reload the table after status update
-            displayRequests(1); // Display first page after update
+            displayRequests(currentPage ? parseInt(currentPage) : 1); // Display the stored page or default to page 1
 
         } catch (error) {
             console.error("Error updating document: ", error);
@@ -298,6 +298,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const currentPage = sessionStorage.getItem("currentPage");
     displayRequests(currentPage ? parseInt(currentPage) : 1); // Display the stored page or default to page 1
 });
+
 
 
 // Define the sendMail function
@@ -565,7 +566,8 @@ async function submitDocument() {
         dateRequested: dateRequested,
         status: "Pending",
         user: "",
-        remarks: ""
+        remarks: "",
+        emailSent: ""
     };
 
     // Add the document to the "Request" collection in Firestore
